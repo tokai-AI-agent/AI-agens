@@ -1,30 +1,138 @@
-# travel-agent
+# 旅行プラン提案AIエージェント
 
-Welcome to your new [Mastra](https://mastra.ai/) project! We're excited to see what you'll build.
+[Mastra](https://mastra.ai/) + [Ollama](https://ollama.com/) + [Tavily](https://tavily.com/) を使った旅行プラン提案AIエージェントのプロトタイプです。
 
-## Getting Started
+ユーザーが旅行先や条件を入力すると、TavilyでWeb検索を行い、取得した情報をもとに旅行プランをMarkdown形式で提案します。
 
-Start the development server:
+## 構成
 
-```shell
+```
+src/mastra/
+├── index.ts                    # Mastra インスタンス
+├── agents/
+│   └── travel-agent.ts         # 旅行プラン提案エージェント
+└── tools/
+    └── tavily-search.ts        # Tavily Web検索ツール
+```
+
+## 前提条件
+
+- Node.js 22.13.0 以上
+- Ollama がローカルで起動していること
+- Tavily API キーを取得済みであること
+
+## セットアップ
+
+### 1. Ollama のセットアップ
+
+Ollama をインストールして `llama3.2:3b` モデルを取得します。
+
+```bash
+# Ollama インストール後、モデルを取得
+ollama pull llama3.2:3b
+
+# Ollama を起動（別ターミナルで）
+ollama serve
+```
+
+### 2. Tavily API キーの取得
+
+1. [https://app.tavily.com](https://app.tavily.com) にアクセスしてアカウントを作成
+2. API キーをコピー
+
+### 3. 環境変数の設定
+
+```bash
+# .env.example をコピーして .env を作成
+cp .env.example .env
+```
+
+`.env` を開いて `TAVILY_API_KEY` に取得したキーを設定します：
+
+```env
+TAVILY_API_KEY=tvly-あなたのAPIキー
+OLLAMA_BASE_URL=http://localhost:11434
+```
+
+### 4. 依存パッケージのインストール
+
+```bash
+npm install
+```
+
+## 起動方法
+
+```bash
 npm run dev
 ```
 
-Open [http://localhost:4111](http://localhost:4111) in your browser to access [Mastra Studio](https://mastra.ai/docs/studio/overview). It provides an interactive UI for building and testing your agents, along with a REST API that exposes your Mastra application as a local service. This lets you start building without worrying about integration right away.
+ブラウザで [http://localhost:4111](http://localhost:4111) を開くと **Mastra Studio** が起動します。
 
-You can start editing files inside the `src/mastra` directory. The development server will automatically reload whenever you make changes.
+## Mastra Studio での使い方
 
-## Learn more
+1. ブラウザで `http://localhost:4111` を開く
+2. 左メニューから **「旅行プラン提案エージェント」** を選択
+3. チャット欄に旅行の希望を入力して送信
 
-To learn more about Mastra, visit our [documentation](https://mastra.ai/docs/). Your bootstrapped project includes example code for [agents](https://mastra.ai/docs/agents/overview), [tools](https://mastra.ai/docs/agents/using-tools), [workflows](https://mastra.ai/docs/workflows/overview), [scorers](https://mastra.ai/docs/evals/overview), and [observability](https://mastra.ai/docs/observability/overview).
+### 入力例
 
-If you're new to AI agents, check out our [course](https://mastra.ai/learn) and [YouTube videos](https://youtube.com/@mastra-ai). You can also join our [Discord](https://discord.gg/BTYqqHKUrf) community to get help and share your projects.
+```
+大阪に行きたいからプランを考えて
+```
+```
+京都に2日間旅行したい
+```
+```
+横浜で日帰り旅行のプランを考えて
+```
+```
+福岡でグルメ中心の旅行プランを考えて
+```
+```
+北海道に家族旅行したい
+```
 
-## Deploy to the Mastra platform
+## 出力形式
 
-The [Mastra platform](https://projects.mastra.ai) provides two products for deploying and managing AI applications built with the Mastra framework:
+エージェントは以下のMarkdown形式で旅行プランを提案します：
 
-- **Studio**: A hosted visual environment for testing agents, running workflows, and inspecting traces
-- **Server**: A production deployment target that runs your Mastra application as an API server
+```markdown
+## 旅行プラン概要
 
-Learn more in the [Mastra platform documentation](https://mastra.ai/docs/mastra-platform/overview).
+- 旅行先：
+- 想定日数：
+- プランのテーマ：
+
+## おすすめスポット
+
+1. スポット名
+   - 特徴：
+   - おすすめ理由：
+
+## モデルプラン
+
+### 1日目
+
+- 午前：
+- 昼：
+- 午後：
+- 夜：
+
+## 移動・注意点
+
+-
+
+## 参考にした情報
+
+- （Web検索の参照元URL・サイト名）
+```
+
+## 技術スタック
+
+| 役割 | ライブラリ |
+|------|-----------|
+| AIエージェントフレームワーク | [Mastra](https://mastra.ai/) |
+| LLM | [Ollama](https://ollama.com/) `llama3.2:3b` |
+| Web検索 | [Tavily](https://tavily.com/) |
+| Ollamaプロバイダー | [ollama-ai-provider](https://github.com/sgomez/ollama-ai-provider) |
+| ストレージ | LibSQL（ローカルファイル） |

@@ -18,12 +18,8 @@
   },
   "dependencies": {
     "@mastra/core": "^1.36.0",
-    "@mastra/duckdb": "^1.4.0",
-    "@mastra/evals": "^1.2.2",
     "@mastra/libsql": "^1.11.1",
-    "@mastra/loggers": "^1.1.1",
-    "@mastra/memory": "^1.19.0",
-    "@mastra/observability": "^1.13.0",
+    "@tavily/core": "^0.7.3",
     "zod": "^4.4.3"
   },
   "devDependencies": {
