@@ -62,6 +62,24 @@ npm install
 
 ## 起動方法
 
+### カスタムUIを使う場合
+
+ターミナルを2つ開き、APIサーバーとフロントエンドを両方起動します。
+
+```bash
+# ターミナル1: Mastra API
+npm run dev:api
+```
+
+```bash
+# ターミナル2: React/Vite UI
+npm run dev:frontend
+```
+
+ブラウザで [http://localhost:5173](http://localhost:5173) を開くと、条件を先に入力できる旅行プラン作成UIが表示されます。
+
+### Mastra Studioを使う場合
+
 ```bash
 npm run dev
 ```

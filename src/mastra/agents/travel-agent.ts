@@ -1,4 +1,5 @@
 import { Agent } from '@mastra/core/agent';
+import { google } from '@ai-sdk/google';
 import { tavilySearchTool } from '../tools/tavily-search';
 
 export const travelAgent = new Agent({
@@ -69,13 +70,6 @@ export const travelAgent = new Agent({
 - 必ずtavily-searchツールで情報収集してからプランを作成する
 - 参照したURLやサイト名を「参考にした情報」に必ず記載する
 - 回答はすべて日本語で行う`,
-  model: {
-    providerId: 'ollama',
-    modelId: 'llama3.2:3b',
-    url: process.env.OLLAMA_BASE_URL
-      ? `${process.env.OLLAMA_BASE_URL}/v1`
-      : 'http://localhost:11434/v1',
-    apiKey: 'ollama',
-  },
+  model: google('gemini-2.5-flash'),
   tools: { tavilySearchTool },
 });
