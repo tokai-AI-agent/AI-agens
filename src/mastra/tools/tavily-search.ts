@@ -12,6 +12,12 @@ export const tavilySearchTool = createTool({
   }),
   outputSchema: z.object({
     answer: z.string(),
+    images: z.array(
+      z.object({
+        url: z.string(),
+        description: z.string().optional(),
+      })
+    ),
     results: z.array(
       z.object({
         title: z.string(),
@@ -27,10 +33,16 @@ export const tavilySearchTool = createTool({
       maxResults: inputData.maxResults ?? 5,
       searchDepth: 'basic',
       includeAnswer: true,
+      includeImages: true,
+      includeImageDescriptions: true,
     });
 
     return {
       answer: response.answer ?? '',
+      images: (response.images ?? []).map((image) => ({
+        url: image.url,
+        description: image.description,
+      })),
       results: response.results.map((r) => ({
         title: r.title,
         url: r.url,
