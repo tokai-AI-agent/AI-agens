@@ -23,11 +23,14 @@ function buildInitialPrompt(c: TripConditions): string {
 追加条件: ${c.requests || 'なし'}
 
 以下を含めて、見やすく日本語で提案してください。
-- 日別の行程
+- 具体的な時刻つきの日別行程（1日あたり6〜9件）
+- 各行先への一言コメント
 - おすすめスポットと食事
 - 移動の目安
 - 予算配分
-- 注意点`;
+- 注意点
+- 検索結果に画像URLがある場合は、各行程の行に「/ 画像URL：https://...」として付ける
+- 1日目の最初の観光地には、目的地を代表する有名な観光名所を選び、可能な限り画像URLを付ける`;
 }
 
 async function callAgent(messages: Message[]): Promise<string> {
