@@ -29,6 +29,7 @@ type AgentMessage = {
 
 type TravelConditionInput = {
   destination: string;
+  departure: string;
   schedule: string;
   budget: string;
   people: string;
@@ -37,7 +38,7 @@ type TravelConditionInput = {
 
 type PlanTab = 'schedule' | 'map' | 'tips';
 type MobileTab = 'chat' | 'plan' | 'map';
-type IntakeStep = 'destination' | 'schedule' | 'budget' | 'purpose' | 'ready';
+type IntakeStep = 'destination' | 'departure' | 'schedule' | 'budget' | 'purpose' | 'ready';
 
 const purposeOptions = [
   { label: '観光', icon: '🏛' },
@@ -52,6 +53,7 @@ const purposeOptions = [
 
 const initialConditions: TravelConditionInput = {
   destination: '',
+  departure: '',
   schedule: '',
   budget: '',
   people: '指定なし',
@@ -60,6 +62,7 @@ const initialConditions: TravelConditionInput = {
 
 const intakePrompts: Record<IntakeStep, string> = {
   destination: 'こんにちわ！あなたの旅行についてお手伝いします。まずは、行きたい旅行先を教えてください！',
+  departure: 'ありがとうございます！次に、どこから出発しますか？出発地点を教えてください！',
   schedule: 'いいですね！次に日程を教えてください！',
   budget: 'では次は予算を教えてください！',
   purpose: '旅行の目的は何ですか？下の選択肢から選んでください。',
@@ -68,6 +71,7 @@ const intakePrompts: Record<IntakeStep, string> = {
 
 const intakeStepLabels: Record<IntakeStep, string> = {
   destination: '目的地',
+  departure: '出発地点',
   schedule: '日程',
   budget: '予算',
   purpose: '目的',
@@ -85,6 +89,7 @@ function buildPlanPrompt(conditions: TravelConditionInput, extraRequest?: string
   return `以下の条件に合う旅行プランを作成してください。
 
 ## ユーザーの旅行条件
+- 出発地点: ${conditions.departure}
 - 行先: ${conditions.destination}
 - 日程: ${conditions.schedule}
 - 予算: ${conditions.budget}
@@ -104,6 +109,8 @@ ${extraRequest ? `- 追加要望: ${extraRequest}` : ''}
 - 検索結果に画像URLがある場合は、各行程の行に画像URLを付ける
 
 ## 出力ルール
+- モデルプランは出発地点（${conditions.departure}）からの移動を起点に組み立ててください。1日目の最初は出発地点から行先までの移動（出発時刻・交通手段・所要時間の目安）にし、最終日の最後は行先から出発地点へ戻る移動で締めくくってください。
+- 出発地点から行先までのアクセス（新幹線・飛行機・車・在来線など）と所要時間・料金目安を「移動・注意点」に必ず記載してください。
 - モデルプランは「- 09:00 - 行先名：一言コメント / 滞在目安：... / 移動：... / 画像URL：https://...」の形式で、1日あたり6〜9件書いてください。
 - 一言コメントは、その場所で何が楽しめるか、またはなぜ条件に合うかを短く書いてください。
 - 画像は検索結果に含まれる実在URLだけを使い、架空URLは作らないでください。画像だけをまとめた章は作らず、該当する観光地・行先の行に付けてください。
@@ -136,6 +143,7 @@ async function callAgent(messages: AgentMessage[]): Promise<string> {
 
 function summarizeConditions(conditions: TravelConditionInput) {
   return [
+    `出発地点: ${conditions.departure}`,
     `行先: ${conditions.destination}`,
     `日程: ${conditions.schedule}`,
     `予算: ${conditions.budget}`,
@@ -166,6 +174,7 @@ export default function App() {
   const canGenerate = useMemo(
     () =>
       conditions.destination.trim() &&
+      conditions.departure.trim() &&
       conditions.schedule.trim() &&
       conditions.budget.trim() &&
       conditions.purposes.length > 0 &&
@@ -203,7 +212,7 @@ export default function App() {
 
   const generatePlan = async (extraRequest?: string) => {
     if (!canGenerate) {
-      setErrorMessage('目的地、日程、予算、目的をすべて入力してください。');
+      setErrorMessage('目的地、出発地点、日程、予算、目的をすべて入力してください。');
       return;
     }
 
@@ -242,6 +251,14 @@ export default function App() {
 
     if (intakeStep === 'destination') {
       updateCondition('destination', trimmed);
+      setIntakeStep('departure');
+      setErrorMessage('');
+      appendMessage('ai', intakePrompts.departure);
+      return;
+    }
+
+    if (intakeStep === 'departure') {
+      updateCondition('departure', trimmed);
       setIntakeStep('schedule');
       setErrorMessage('');
       appendMessage('ai', intakePrompts.schedule);
@@ -517,6 +534,7 @@ function ConditionForm({
       </div>
       <div className="conversation-progress" aria-label="入力済みの旅行条件">
         <ConditionSummaryItem label="目的地" value={conditions.destination} active={intakeStep === 'destination'} />
+        <ConditionSummaryItem label="出発地点" value={conditions.departure} active={intakeStep === 'departure'} />
         <ConditionSummaryItem label="日程" value={conditions.schedule} active={intakeStep === 'schedule'} />
         <ConditionSummaryItem label="予算" value={conditions.budget} active={intakeStep === 'budget'} />
         <ConditionSummaryItem
@@ -764,6 +782,7 @@ function TravelPlanTimeline({
             <button className="arrange-button" type="button">アレンジ</button>
           </div>
           <div className="condition-chips">
+            {conditions.departure && <span>{conditions.departure} 発</span>}
             <span>{conditions.schedule}</span>
             <span>{conditions.budget}</span>
             <span>{conditions.people}</span>
@@ -929,7 +948,7 @@ function PlanSummaryCards({ conditions }: { conditions: TravelConditionInput }) 
       <div className="summary-card">
         <span>🧭</span>
         <strong>旅行条件</strong>
-        <p>{conditions.destination} / {conditions.schedule} / {conditions.people} / {conditions.budget}</p>
+        <p>{conditions.departure} → {conditions.destination} / {conditions.schedule} / {conditions.people} / {conditions.budget}</p>
       </div>
       <div className="summary-card">
         <span>🎯</span>
