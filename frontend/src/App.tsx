@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import './App.css';
 
 // Legacy type kept for backward compatibility with older screens/ResultPage.
@@ -152,6 +152,62 @@ function summarizeConditions(conditions: TravelConditionInput) {
   ].join('\n');
 }
 
+// 保存したプラン1件分のデータ。生成本文(planText)と入力条件をまとめて持ち、
+// あとから一覧表示・復元できるようにする。
+type SavedPlan = {
+  id: string;
+  title: string;
+  planText: string;
+  conditions: TravelConditionInput;
+  savedAt: string;
+};
+
+// localStorageのキー。アプリ固有の接頭辞を付けて他データと衝突しないようにする。
+const SAVED_PLANS_KEY = 'travel-agent:saved-plans';
+
+// localStorageから保存済みプランを読み込む。
+// 未保存・壊れたJSON・localStorage無効（プライベートモード等）の場合は空配列を返し、アプリを落とさない。
+function loadSavedPlans(): SavedPlan[] {
+  try {
+    const raw = localStorage.getItem(SAVED_PLANS_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? (parsed as SavedPlan[]) : [];
+  } catch {
+    return [];
+  }
+}
+
+// 保存済みプランをlocalStorageへ書き込む。容量超過などで失敗してもアプリを止めない。
+function persistSavedPlans(plans: SavedPlan[]) {
+  try {
+    localStorage.setItem(SAVED_PLANS_KEY, JSON.stringify(plans));
+  } catch {
+    // localStorageが使えない/容量超過のときは黙って無視する
+  }
+}
+
+// 保存日時を「2026/06/17 14:30」のような読みやすい形式に整える。
+function formatSavedAt(iso: string) {
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return '';
+  return new Intl.DateTimeFormat('ja-JP', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+  }).format(date);
+}
+
+// 保存プランのIDを採番する。対応ブラウザではUUID、無ければ時刻文字列でフォールバック。
+function createPlanId(): string {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return crypto.randomUUID();
+  }
+  return `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+}
+
 export default function App() {
   const [conditions, setConditions] = useState<TravelConditionInput>(initialConditions);
   const [intakeStep, setIntakeStep] = useState<IntakeStep>('destination');
@@ -170,6 +226,15 @@ export default function App() {
   const [mobileTab, setMobileTab] = useState<MobileTab>('chat');
   const [isGenerating, setIsGenerating] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+  // 保存済みプランは初回レンダー時にlocalStorageから一度だけ読み込む（遅延初期化）。
+  const [savedPlans, setSavedPlans] = useState<SavedPlan[]>(() => loadSavedPlans());
+  const [isSavedOpen, setIsSavedOpen] = useState(false);
+
+  // savedPlansが変わるたびにlocalStorageへ同期する。
+  // stateを唯一の正としておけば、保存/削除のたびに個別に書き込む必要がなく整合性が崩れない。
+  useEffect(() => {
+    persistSavedPlans(savedPlans);
+  }, [savedPlans]);
 
   const canGenerate = useMemo(
     () =>
@@ -208,6 +273,41 @@ export default function App() {
       ...prev,
       { id: Date.now() + prev.length, role, content, time: nowLabel() },
     ]);
+  };
+
+  // 現在表示中のプランを保存する。プラン未生成・本文が空のときは何もしない。
+  const handleSavePlan = () => {
+    if (!planGenerated || !planText.trim()) return;
+    const title = `${conditions.destination || '旅行'} 旅行プラン`;
+    const newPlan: SavedPlan = {
+      id: createPlanId(),
+      title,
+      planText,
+      // 復元時に条件チップ等も再現できるよう、入力条件のスナップショットを一緒に保存する。
+      conditions,
+      savedAt: new Date().toISOString(),
+    };
+    // 新しいものを先頭に積む（最近保存した順で一覧表示するため）。
+    setSavedPlans(prev => [newPlan, ...prev]);
+    appendMessage('ai', `「${title}」を保存しました。左メニューの「保存したプラン」からいつでも見返せます。`);
+  };
+
+  // 保存済みプランを画面に復元する。条件・本文・タブ表示をまとめて元に戻す。
+  const handleLoadPlan = (plan: SavedPlan) => {
+    setConditions(plan.conditions);
+    setPlanText(plan.planText);
+    setPlanGenerated(true);
+    setIntakeStep('ready');
+    setActivePlanTab('schedule');
+    setMobileTab('plan');
+    setErrorMessage('');
+    setIsSavedOpen(false);
+    appendMessage('ai', `保存した「${plan.title}」を読み込みました。`);
+  };
+
+  // 指定IDの保存プランを削除する（localStorageへの反映は同期エフェクトが行う）。
+  const handleDeletePlan = (id: string) => {
+    setSavedPlans(prev => prev.filter(plan => plan.id !== id));
   };
 
   const generatePlan = async (extraRequest?: string) => {
@@ -291,9 +391,9 @@ export default function App() {
 
   return (
     <div className="travel-app">
-      <Sidebar />
+      <Sidebar savedCount={savedPlans.length} onOpenSaved={() => setIsSavedOpen(true)} />
       <div className="workspace">
-        <Header planGenerated={planGenerated} />
+        <Header planGenerated={planGenerated} onSavePlan={handleSavePlan} />
         <MobileTabs activeTab={mobileTab} onChange={setMobileTab} />
         <main className="content-grid">
           <section className={`chat-column mobile-panel ${mobileTab === 'chat' ? 'mobile-panel--active' : ''}`}>
@@ -328,11 +428,25 @@ export default function App() {
           </section>
         </main>
       </div>
+      {isSavedOpen && (
+        <SavedPlansModal
+          plans={savedPlans}
+          onClose={() => setIsSavedOpen(false)}
+          onLoad={handleLoadPlan}
+          onDelete={handleDeletePlan}
+        />
+      )}
     </div>
   );
 }
 
-function Header({ planGenerated }: { planGenerated: boolean }) {
+function Header({
+  planGenerated,
+  onSavePlan,
+}: {
+  planGenerated: boolean;
+  onSavePlan: () => void;
+}) {
   return (
     <header className="app-header">
       <div>
@@ -340,15 +454,22 @@ function Header({ planGenerated }: { planGenerated: boolean }) {
         <h1>Travel AI Agent</h1>
         <p>あなたにぴったりの旅行プランを提案します</p>
       </div>
-      <ActionButtons planGenerated={planGenerated} />
+      <ActionButtons planGenerated={planGenerated} onSavePlan={onSavePlan} />
     </header>
   );
 }
 
-function ActionButtons({ planGenerated }: { planGenerated: boolean }) {
+function ActionButtons({
+  planGenerated,
+  onSavePlan,
+}: {
+  planGenerated: boolean;
+  onSavePlan: () => void;
+}) {
   return (
     <div className="header-actions">
-      <button className="ghost-action" type="button" disabled={!planGenerated}>
+      {/* プラン未生成のときは保存できないので無効化する */}
+      <button className="ghost-action" type="button" disabled={!planGenerated} onClick={onSavePlan}>
         <span>💾</span>
         プランを保存
       </button>
@@ -365,7 +486,13 @@ function ActionButtons({ planGenerated }: { planGenerated: boolean }) {
   );
 }
 
-function Sidebar() {
+function Sidebar({
+  savedCount,
+  onOpenSaved,
+}: {
+  savedCount: number;
+  onOpenSaved: () => void;
+}) {
   const items = [
     ['チャット', '💬'],
     ['旅行プラン', '🗓'],
@@ -385,16 +512,22 @@ function Sidebar() {
         </div>
       </div>
       <nav className="nav-list" aria-label="メインナビゲーション">
-        {items.map(([label, icon]) => (
-          <button
-            key={label}
-            className={`nav-button ${label === 'チャット' ? 'nav-button--active' : ''}`}
-            type="button"
-          >
-            <span>{icon}</span>
-            <b>{label}</b>
-          </button>
-        ))}
+        {items.map(([label, icon]) => {
+          const isSaved = label === '保存したプラン';
+          return (
+            <button
+              key={label}
+              className={`nav-button ${label === 'チャット' ? 'nav-button--active' : ''}`}
+              type="button"
+              // 「保存したプラン」だけ保存一覧モーダルを開く。他は従来どおり装飾用。
+              onClick={isSaved ? onOpenSaved : undefined}
+            >
+              <span>{icon}</span>
+              <b>{label}</b>
+              {isSaved && savedCount > 0 && <span className="nav-badge">{savedCount}</span>}
+            </button>
+          );
+        })}
       </nav>
       <div className="travel-note">
         <div className="mini-illustration">
@@ -406,6 +539,68 @@ function Sidebar() {
         <p>会話しながら無理のない旅程を整えます。</p>
       </div>
     </aside>
+  );
+}
+
+// 保存済みプランの一覧モーダル。開く（復元）／削除ができる。
+function SavedPlansModal({
+  plans,
+  onClose,
+  onLoad,
+  onDelete,
+}: {
+  plans: SavedPlan[];
+  onClose: () => void;
+  onLoad: (plan: SavedPlan) => void;
+  onDelete: (id: string) => void;
+}) {
+  // 背景クリックで閉じ、カード内のクリックは伝播を止めて閉じないようにする。
+  return (
+    <div
+      className="modal-overlay"
+      role="dialog"
+      aria-modal="true"
+      aria-label="保存したプラン"
+      onClick={onClose}
+    >
+      <div className="modal-card" onClick={event => event.stopPropagation()}>
+        <div className="modal-header">
+          <h2>保存したプラン</h2>
+          <button className="modal-close" type="button" aria-label="閉じる" onClick={onClose}>
+            ×
+          </button>
+        </div>
+        {plans.length === 0 ? (
+          <p className="modal-empty">
+            まだ保存したプランはありません。プランを作成して「プランを保存」を押すと、ここに一覧表示されます。
+          </p>
+        ) : (
+          <ul className="saved-plan-list">
+            {plans.map(plan => (
+              <li key={plan.id} className="saved-plan-item">
+                <div className="saved-plan-info">
+                  <strong>{plan.title}</strong>
+                  <span>{formatSavedAt(plan.savedAt)}</span>
+                  <small>{summarizeConditions(plan.conditions).replace(/\n/g, ' / ')}</small>
+                </div>
+                <div className="saved-plan-actions">
+                  <button className="saved-plan-open" type="button" onClick={() => onLoad(plan)}>
+                    開く
+                  </button>
+                  <button
+                    className="saved-plan-delete"
+                    type="button"
+                    onClick={() => onDelete(plan.id)}
+                  >
+                    削除
+                  </button>
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+    </div>
   );
 }
 
@@ -765,14 +960,10 @@ function TravelPlanTimeline({
   activeTab: PlanTab;
   onTabChange: (tab: PlanTab) => void;
 }) {
-  const heroImage = getHeroImageFromPlan(planText);
-
   return (
     <div className="generated-plan">
-      <div
-        className={`plan-hero ${heroImage ? 'plan-hero--image' : 'plan-hero--empty'}`}
-        style={heroImage ? { backgroundImage: `url(${heroImage})` } : undefined}
-      >
+      <div className="plan-hero">
+        <PlanHeroImage planText={planText} destination={conditions.destination} />
         <div className="plan-hero-overlay">
           <div className="plan-title-row">
             <div>
@@ -808,7 +999,7 @@ function TravelPlanTimeline({
           </button>
         ))}
       </div>
-      {activeTab === 'schedule' && <PlanMarkdown text={planText} />}
+      {activeTab === 'schedule' && <PlanMarkdown text={planText} destination={conditions.destination} />}
       {activeTab === 'map' && <MapPreview destination={conditions.destination} planGenerated />}
       {activeTab === 'tips' && <PlanSummaryCards conditions={conditions} />}
     </div>
@@ -834,7 +1025,212 @@ function getHeroImageFromPlan(text: string) {
   return '';
 }
 
-function PlanMarkdown({ text }: { text: string }) {
+// 画像のフォールバック段階：tavily画像 → Wikipedia/Wikimedia → 取得できなければ空白
+type ImageStage = 'primary' | 'wikipedia' | 'blank';
+
+const wikipediaImageCache = new Map<string, Promise<string | null>>();
+
+// 観光地名から検索の邪魔になる語（括弧書きの補足や「〜で昼食」などの動作）を取り除き、
+// Wikipedia検索に使う中心的な地名だけを取り出す。
+function cleanSpotTitle(rawTitle: string): string {
+  return rawTitle
+    .replace(/[（(][^）)]*[）)]/g, '')
+    .replace(
+      /(での|で|にて|を|へ)?(昼食|夕食|朝食|ランチ|ディナー|カフェ|グルメ|食事|食べ歩き|買い物|ショッピング|休憩|散策|見学|観光|参拝|鑑賞|体験|宿泊|滞在).*$/u,
+      '',
+    )
+    .replace(/[「」『』]/g, '')
+    .trim();
+}
+
+// 「〜から〜へ移動」「出発」「到着」など、観光地ではない行程かどうかを判定する。
+// これらの行には観光地画像を付けない（駅などの無関係な画像が入るのを防ぐ）。
+function isNonSpotLine(title: string): boolean {
+  return (
+    /(出発|到着|帰宅|帰路|解散|チェックイン|チェックアウト)/.test(title) ||
+    (/移動/.test(title) && /(から|へ|→|まで)/.test(title))
+  );
+}
+
+// Wikipediaの記事タイトルが観光地名と関連しているかを判定する。
+// どちらかがもう一方を含む（2文字以上の一致）場合のみ関連とみなし、
+// 全文検索が無関係な記事の画像を返すのを防ぐ。
+function isRelevantTitle(spotName: string, pageTitle: string): boolean {
+  const normalize = (value: string) => value.replace(/[\s（）()「」『』・、。,.\-]/g, '');
+  const a = normalize(spotName);
+  const b = normalize(pageTitle);
+  if (a.length < 2 || b.length < 2) return false;
+  const [shorter, longer] = a.length <= b.length ? [a, b] : [b, a];
+  return longer.includes(shorter);
+}
+
+// 地名でWikipediaのページを直接引き、サムネイルURLを返す（リダイレクト追従）。
+// 名前で直接引くので、得られる画像は必ずその地名のもの。見つからなければnull。
+async function fetchWikipediaThumbnailByTitle(title: string): Promise<string | null> {
+  try {
+    const url =
+      `https://ja.wikipedia.org/w/api.php?action=query&format=json&origin=*&redirects=1` +
+      `&titles=${encodeURIComponent(title)}&prop=pageimages&piprop=thumbnail&pithumbsize=480`;
+    const res = await fetch(url);
+    if (!res.ok) return null;
+    const data = await res.json();
+    const pages = data?.query?.pages;
+    if (!pages) return null;
+    const page = Object.values(pages)[0] as
+      | { missing?: string; thumbnail?: { source?: string } }
+      | undefined;
+    if (!page || page.missing !== undefined) return null;
+    return page.thumbnail?.source ?? null;
+  } catch {
+    return null;
+  }
+}
+
+// Wikipediaを全文検索し、観光地名と関連するタイトルの記事のサムネイルだけを返す。
+// 関連性チェックにより、無関係な記事の画像が紛れ込むのを防ぐ。
+async function fetchWikipediaThumbnailBySearch(
+  term: string,
+  spotName: string,
+): Promise<string | null> {
+  try {
+    const url =
+      `https://ja.wikipedia.org/w/api.php?action=query&format=json&origin=*` +
+      `&generator=search&gsrsearch=${encodeURIComponent(term)}&gsrlimit=5` +
+      `&prop=pageimages&piprop=thumbnail&pithumbsize=480`;
+    const res = await fetch(url);
+    if (!res.ok) return null;
+    const data = await res.json();
+    const pages = data?.query?.pages;
+    if (!pages) return null;
+    const sorted = Object.values(pages).sort(
+      (a: any, b: any) => (a?.index ?? 0) - (b?.index ?? 0),
+    );
+    const relevant = sorted.find(
+      (page: any) => page?.thumbnail?.source && isRelevantTitle(spotName, page?.title ?? ''),
+    ) as { thumbnail?: { source?: string } } | undefined;
+    return relevant?.thumbnail?.source ?? null;
+  } catch {
+    return null;
+  }
+}
+
+// 観光地名でWikipediaのサムネイルを探す。
+// (1) 地名で直接ページを引く → (2) 関連性チェック付きの全文検索 → (3) 目的地を足して再検索。
+// いずれも該当しなければnull（呼び出し側で空白表示にする）。
+async function fetchWikipediaImage(title: string, destination: string): Promise<string | null> {
+  const spotName = cleanSpotTitle(title);
+  if (spotName.length < 2) return null;
+  // 移動・出発などスポットではない行には画像を付けない
+  if (isNonSpotLine(title)) return null;
+
+  const cacheKey = `${destination}|${spotName}`;
+  let lookup = wikipediaImageCache.get(cacheKey);
+  if (!lookup) {
+    lookup = (async () => {
+      const direct = await fetchWikipediaThumbnailByTitle(spotName);
+      if (direct) return direct;
+
+      const searched = await fetchWikipediaThumbnailBySearch(spotName, spotName);
+      if (searched) return searched;
+
+      if (destination && !spotName.includes(destination)) {
+        const searchedWithDest = await fetchWikipediaThumbnailBySearch(
+          `${destination} ${spotName}`,
+          spotName,
+        );
+        if (searchedWithDest) return searchedWithDest;
+      }
+
+      return null;
+    })();
+    wikipediaImageCache.set(cacheKey, lookup);
+  }
+
+  return lookup;
+}
+
+// tavily画像があれば優先し、無い／読み込み失敗時はWikipediaを試す。それも取得できなければ空白にする。
+function SpotImage({
+  title,
+  destination,
+  primarySrc,
+  alt,
+  className = 'timeline-markdown-image',
+}: {
+  title: string;
+  destination: string;
+  primarySrc?: string;
+  alt: string;
+  className?: string;
+}) {
+  const [src, setSrc] = useState<string | undefined>(primarySrc);
+  const [stage, setStage] = useState<ImageStage>(primarySrc ? 'primary' : 'wikipedia');
+
+  // プラン再生成などで入力が変わったら初期状態に戻す
+  useEffect(() => {
+    setSrc(primarySrc);
+    setStage(primarySrc ? 'primary' : 'wikipedia');
+  }, [primarySrc, title, destination]);
+
+  // Wikipedia段階に入ったらサムネイルを取得し、無ければ空白にする
+  useEffect(() => {
+    if (stage !== 'wikipedia') return;
+    let cancelled = false;
+    fetchWikipediaImage(title, destination).then(found => {
+      if (cancelled) return;
+      if (found) {
+        setSrc(found);
+      } else {
+        setSrc(undefined);
+        setStage('blank');
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [stage, title, destination]);
+
+  // 画像の読み込みに失敗したら次のフォールバックへ
+  const handleError = () => {
+    if (stage === 'primary') {
+      setSrc(undefined);
+      setStage('wikipedia');
+    } else if (stage === 'wikipedia') {
+      setSrc(undefined);
+      setStage('blank');
+    }
+  };
+
+  // Wikipediaでも取得できなければ空白にする
+  if (stage === 'blank') {
+    return null;
+  }
+
+  // Wikipedia取得待ちの間はシマーを表示
+  if (!src) {
+    return <div className={`${className} image-loading`} aria-hidden="true" />;
+  }
+
+  return (
+    <img className={className} src={src} alt={alt} loading="lazy" onError={handleError} />
+  );
+}
+
+function PlanHeroImage({ planText, destination }: { planText: string; destination: string }) {
+  const primary = useMemo(() => getHeroImageFromPlan(planText) || undefined, [planText]);
+  const label = destination || '旅行先';
+  return (
+    <SpotImage
+      className="plan-hero-image"
+      title={label}
+      destination={destination}
+      primarySrc={primary}
+      alt={`${label}の風景`}
+    />
+  );
+}
+
+function PlanMarkdown({ text, destination }: { text: string; destination: string }) {
   const lines = text
     .replace(/^```markdown\s*/i, '')
     .replace(/```$/i, '')
@@ -860,7 +1256,14 @@ function PlanMarkdown({ text }: { text: string }) {
         if (trimmed.startsWith('## ')) return <h2 key={index}>{trimmed.replace(/^##\s*/, '')}</h2>;
         if (/^\d+\.\s/.test(trimmed)) return <TravelSpotCard key={index} text={trimmed} />;
         if (/^-\s*\d{1,2}:\d{2}\s*-/.test(trimmed)) {
-          return <TimelineMarkdownItem key={index} text={trimmed} imageBank={imageBank} />;
+          return (
+            <TimelineMarkdownItem
+              key={index}
+              text={trimmed}
+              imageBank={imageBank}
+              destination={destination}
+            />
+          );
         }
         if (trimmed.startsWith('- ')) return <p className="markdown-bullet" key={index}>{trimmed}</p>;
         return <p key={index}>{trimmed}</p>;
@@ -872,9 +1275,11 @@ function PlanMarkdown({ text }: { text: string }) {
 function TimelineMarkdownItem({
   text,
   imageBank,
+  destination,
 }: {
   text: string;
   imageBank: Record<string, string>;
+  destination: string;
 }) {
   const normalized = text.replace(/^-\s*/, '');
   const match = normalized.match(/^(\d{1,2}:\d{2})\s*-\s*(.+)$/);
@@ -887,17 +1292,24 @@ function TimelineMarkdownItem({
   const [title, comment] = titlePart.split(/[:：]/);
   const displayMetaParts = metaParts.filter(part => part.trim());
   const normalizedTitle = title.trim();
-  const matchedImageSrc =
-    inlineImageSrc ??
-    imageBank[normalizedTitle] ??
-    Object.entries(imageBank).find(([alt]) => normalizedTitle.includes(alt) || alt.includes(normalizedTitle))?.[1];
+  // 移動・出発などスポットではない行には画像を付けない（無関係な画像が入るのを防ぐ）
+  const isMoveLine = isNonSpotLine(normalizedTitle);
+  // imageBankの曖昧一致は、短い別名による誤マッチを防ぐため3文字以上の一致に限定する
+  const fuzzyImage = Object.entries(imageBank).find(([alt]) => {
+    const cleanAlt = alt.trim();
+    return (
+      cleanAlt.length >= 3 &&
+      (normalizedTitle.includes(cleanAlt) || cleanAlt.includes(normalizedTitle))
+    );
+  })?.[1];
+  const matchedImageSrc = inlineImageSrc ?? imageBank[normalizedTitle] ?? fuzzyImage;
 
   return (
     <article className="timeline-markdown-item">
       <div className="timeline-markdown-time">{time}</div>
       <div className="timeline-markdown-dot" />
       <div className="timeline-markdown-card">
-        <div className="timeline-markdown-body">
+        <div className={`timeline-markdown-body ${isMoveLine ? 'timeline-markdown-body--full' : ''}`}>
           <div>
             <h3>{normalizedTitle}</h3>
             {comment && <p>{comment.trim()}</p>}
@@ -909,20 +1321,15 @@ function TimelineMarkdownItem({
               </div>
             )}
           </div>
-          {matchedImageSrc && (
-            <img
-              className="timeline-markdown-image"
-              src={matchedImageSrc}
+          {!isMoveLine && (
+            <SpotImage
+              title={normalizedTitle}
+              destination={destination}
+              primarySrc={matchedImageSrc}
               alt={normalizedTitle}
-              loading="lazy"
             />
           )}
         </div>
-        {!matchedImageSrc && (
-          <div className="timeline-markdown-placeholder" aria-hidden="true">
-            <span>📍</span>
-          </div>
-        )}
       </div>
     </article>
   );
