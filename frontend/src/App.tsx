@@ -310,6 +310,24 @@ export default function App() {
     setSavedPlans(prev => prev.filter(plan => plan.id !== id));
   };
 
+  // 新しいチャットを開始する（最初の条件入力からやり直す）。
+  // プラン生成後は入力欄が「追加要望」モードに切り替わり新規プランを作れないため、
+  // ここで会話・条件・生成結果をすべて初期状態へ戻す。保存済みプランは消さない。
+  const startNewChat = () => {
+    setConditions(initialConditions);
+    setIntakeStep('destination');
+    setPlanGenerated(false);
+    setPlanText('');
+    setMessages([
+      { id: Date.now(), role: 'ai', content: intakePrompts.destination, time: nowLabel() },
+    ]);
+    setInput('');
+    setActivePlanTab('schedule');
+    setMobileTab('chat');
+    setErrorMessage('');
+    setIsGenerating(false);
+  };
+
   const generatePlan = async (extraRequest?: string) => {
     if (!canGenerate) {
       setErrorMessage('目的地、出発地点、日程、予算、目的をすべて入力してください。');
@@ -391,7 +409,11 @@ export default function App() {
 
   return (
     <div className="travel-app">
-      <Sidebar savedCount={savedPlans.length} onOpenSaved={() => setIsSavedOpen(true)} />
+      <Sidebar
+        savedCount={savedPlans.length}
+        onOpenSaved={() => setIsSavedOpen(true)}
+        onNewChat={startNewChat}
+      />
       <div className="workspace">
         <Header planGenerated={planGenerated} onSavePlan={handleSavePlan} />
         <MobileTabs activeTab={mobileTab} onChange={setMobileTab} />
@@ -489,9 +511,11 @@ function ActionButtons({
 function Sidebar({
   savedCount,
   onOpenSaved,
+  onNewChat,
 }: {
   savedCount: number;
   onOpenSaved: () => void;
+  onNewChat: () => void;
 }) {
   const items = [
     ['チャット', '💬'],
@@ -514,13 +538,15 @@ function Sidebar({
       <nav className="nav-list" aria-label="メインナビゲーション">
         {items.map(([label, icon]) => {
           const isSaved = label === '保存したプラン';
+          const isChat = label === 'チャット';
+          // 「チャット」で新規チャット開始、「保存したプラン」で保存一覧モーダル。他は従来どおり装飾用。
+          const onClick = isChat ? onNewChat : isSaved ? onOpenSaved : undefined;
           return (
             <button
               key={label}
-              className={`nav-button ${label === 'チャット' ? 'nav-button--active' : ''}`}
+              className={`nav-button ${isChat ? 'nav-button--active' : ''}`}
               type="button"
-              // 「保存したプラン」だけ保存一覧モーダルを開く。他は従来どおり装飾用。
-              onClick={isSaved ? onOpenSaved : undefined}
+              onClick={onClick}
             >
               <span>{icon}</span>
               <b>{label}</b>
