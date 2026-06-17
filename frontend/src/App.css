@@ -1226,6 +1226,43 @@ button {
   overflow: hidden;
 }
 
+/* Leafletは高さ0だと地図が描画されないため、コンテナに明示的な高さを与える */
+.map-leaflet {
+  height: 360px;
+  margin-bottom: 18px;
+  border: 1px solid #dbeafe;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.map-leaflet__canvas {
+  width: 100%;
+  height: 100%;
+}
+
+/* ジオコーディング中のローディング表示 */
+.map-locating {
+  height: 360px;
+  margin-bottom: 18px;
+  border: 1px solid #dbeafe;
+  border-radius: 8px;
+  background: #f0f9ff;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  padding: 24px;
+  text-align: center;
+}
+
+.map-locating p {
+  margin: 0;
+  color: #6b7280;
+  font-size: 14px;
+  line-height: 1.7;
+}
+
 .map-road {
   position: absolute;
   height: 18px;

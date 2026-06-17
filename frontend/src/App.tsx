@@ -1,5 +1,21 @@
 import { useEffect, useMemo, useState } from 'react';
+import { MapContainer, TileLayer, Marker, Popup, Polyline, useMap } from 'react-leaflet';
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
+import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png';
+import markerIcon from 'leaflet/dist/images/marker-icon.png';
+import markerShadow from 'leaflet/dist/images/marker-shadow.png';
 import './App.css';
+
+// Leafletのデフォルトマーカーアイコンは、画像URLを相対パスで自前解決するため
+// Viteのバンドル下では画像が見つからずピンが表示されない既知の問題がある。
+// バンドラが解決したアイコンURLを明示的に差し込んで表示されるようにする。
+delete (L.Icon.Default.prototype as { _getIconUrl?: unknown })._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: markerIcon2x,
+  iconUrl: markerIcon,
+  shadowUrl: markerShadow,
+});
 
 // Legacy type kept for backward compatibility with older screens/ResultPage.
 export type TripConditions = {
@@ -111,8 +127,11 @@ ${extraRequest ? `- 追加要望: ${extraRequest}` : ''}
 ## 出力ルール
 - モデルプランは出発地点（${conditions.departure}）からの移動を起点に組み立ててください。1日目の最初は出発地点から行先までの移動（出発時刻・交通手段・所要時間の目安）にし、最終日の最後は行先から出発地点へ戻る移動で締めくくってください。
 - 出発地点から行先までのアクセス（新幹線・飛行機・車・在来線など）と所要時間・料金目安を「移動・注意点」に必ず記載してください。
-- モデルプランは「- 09:00 - 行先名：一言コメント / 滞在目安：... / 移動：... / 画像URL：https://...」の形式で、1日あたり6〜9件書いてください。
+- モデルプランは「- 09:00 - 行先名：一言コメント / 滞在目安：... / 移動：... / 住所：... / 画像URL：https://...」の形式で、1日あたり6〜9件書いてください。
 - 一言コメントは、その場所で何が楽しめるか、またはなぜ条件に合うかを短く書いてください。
+- 各観光地・飲食店の行には、検索結果から取得した正確な住所を「/ 住所：◯◯」の形式で必ず付けてください（地図のピンを正しい場所に立てるために使います）。例: - 09:00 - 龍安寺：石庭が有名 / 滞在目安：60分 / 移動：徒歩5分 / 住所：京都府京都市右京区龍安寺御陵ノ下町13 / 画像URL：https://...
+- 住所が検索結果で確認できない場合は「/ 住所：不明」とし、推測で住所を作らないでください。
+- 移動・出発・到着の行には住所を付けないでください。
 - 画像は検索結果に含まれる実在URLだけを使い、架空URLは作らないでください。画像だけをまとめた章は作らず、該当する観光地・行先の行に付けてください。
 - 1日目の最初の観光地には、行先を代表する有名な観光名所を選び、可能な限り画像URLを付けてください。この画像はプランのヘッダー背景にも使います。
 
@@ -446,7 +465,11 @@ export default function App() {
             />
           </section>
           <section className={`map-mobile-panel mobile-panel ${mobileTab === 'map' ? 'mobile-panel--active' : ''}`}>
-            <MapPreview destination={conditions.destination} planGenerated={planGenerated} />
+            <MapPreview
+              destination={conditions.destination}
+              planGenerated={planGenerated}
+              planText={planText}
+            />
           </section>
         </main>
       </div>
@@ -1026,7 +1049,9 @@ function TravelPlanTimeline({
         ))}
       </div>
       {activeTab === 'schedule' && <PlanMarkdown text={planText} destination={conditions.destination} />}
-      {activeTab === 'map' && <MapPreview destination={conditions.destination} planGenerated />}
+      {activeTab === 'map' && (
+        <MapPreview destination={conditions.destination} planGenerated planText={planText} />
+      )}
       {activeTab === 'tips' && <PlanSummaryCards conditions={conditions} />}
     </div>
   );
@@ -1397,13 +1422,250 @@ function PlanSummaryCards({ conditions }: { conditions: TravelConditionInput }) 
   );
 }
 
+type LatLng = { lat: number; lng: number };
+type PlanSpot = { name: string; time: string; address?: string };
+type GeoSpot = PlanSpot & LatLng;
+
+function sleep(ms: number) {
+  return new Promise<void>(resolve => setTimeout(resolve, ms));
+}
+
+// ジオコーディング結果が日本のおおよその範囲（緯度24〜46・経度122〜154）に収まるか判定する。
+// 同名の海外地点に誤爆したピンを弾くための最終防波堤。
+function isWithinJapan({ lat, lng }: LatLng): boolean {
+  return lat >= 24 && lat <= 46 && lng >= 122 && lng <= 154;
+}
+
+// ジオコーディング結果のキャッシュ（地名クエリ→座標 or null）。
+// 既存のwikipediaImageCacheと同じく、再レンダーやタブ切替で同じ地名を無駄に再取得しない。
+const geocodeCache = new Map<string, Promise<LatLng | null>>();
+// Nominatimの利用ポリシー（直列・1秒に1回まで）を守るためのリクエスト直列化チェーン。
+let geocodeQueue: Promise<unknown> = Promise.resolve();
+const GEOCODE_MIN_GAP_MS = 1100;
+
+// OpenStreetMapのNominatimで地名を座標へ変換する（無料・APIキー不要）。
+// 取得できなければnull。利用ポリシー順守のためネットワークリクエストは直列＋1.1秒間隔。
+function geocodePlace(query: string): Promise<LatLng | null> {
+  const key = query.trim();
+  if (!key) return Promise.resolve(null);
+
+  const cached = geocodeCache.get(key);
+  if (cached) return cached; // キャッシュ済みはネットワークを使わないので待たない
+
+  const lookup = (async () => {
+    // 直前のリクエスト完了を待ち、さらに間隔を空けてから実行する（直列＋レート制限）
+    const previous = geocodeQueue;
+    let release: () => void = () => {};
+    geocodeQueue = new Promise<void>(resolve => {
+      release = resolve;
+    });
+    try {
+      await previous;
+      await sleep(GEOCODE_MIN_GAP_MS);
+      const url =
+        `https://nominatim.openstreetmap.org/search?format=json&limit=1` +
+        `&accept-language=ja&q=${encodeURIComponent(key)}`;
+      // ブラウザではUser-Agentを設定できないため、言語ヒントのみ付与する
+      const res = await fetch(url, { headers: { 'Accept-Language': 'ja' } });
+      if (!res.ok) return null;
+      const data = await res.json();
+      if (!Array.isArray(data) || data.length === 0) return null;
+      const lat = Number(data[0]?.lat);
+      const lng = Number(data[0]?.lon);
+      if (Number.isNaN(lat) || Number.isNaN(lng)) return null;
+      return { lat, lng };
+    } catch {
+      return null;
+    } finally {
+      release();
+    }
+  })();
+
+  geocodeCache.set(key, lookup);
+  return lookup;
+}
+
+// planTextのタイムライン行（- 09:00 - スポット名：... / ...）から地図に立てるスポットを抽出する。
+// 既存のPlanMarkdown/TimelineMarkdownItemと同じルールで、移動・出発などの行は除外し、
+// cleanSpotTitleで地名を整える。重複スポットは最初の1件だけ残す。
+function extractPlanSpots(planText: string): PlanSpot[] {
+  const lines = planText
+    .replace(/^```markdown\s*/i, '')
+    .replace(/```$/i, '')
+    .split('\n');
+
+  const spots: PlanSpot[] = [];
+  const seen = new Set<string>();
+  for (const raw of lines) {
+    const trimmed = raw.trim();
+    if (!/^-\s*\d{1,2}:\d{2}\s*-/.test(trimmed)) continue;
+
+    const normalized = trimmed.replace(/^-\s*/, '');
+    const match = normalized.match(/^(\d{1,2}:\d{2})\s*-\s*(.+)$/);
+    if (!match) continue;
+
+    const time = match[1];
+    // 画像URL部分を取り除いてから「スポット名：コメント / ...」の先頭タイトルを取り出す
+    const detail = match[2].replace(/\s\/\s*画像URL[:：]\s*\S+/g, '');
+    const titlePart = detail.split(/\s*\/\s*/)[0];
+    const rawTitle = titlePart.split(/[:：]/)[0].trim();
+    if (!rawTitle || isNonSpotLine(rawTitle)) continue; // 移動・出発・到着などはスキップ
+
+    const name = cleanSpotTitle(rawTitle);
+    if (name.length < 2 || seen.has(name)) continue;
+    seen.add(name);
+
+    // 「/ 住所：◯◯」フィールドを抽出（/区切りの1フィールドなので次の/手前まで）。
+    // 「不明」は推測住所ではないので住所として扱わず、名前フォールバックに回す。
+    const addressMatch = match[2].match(/住所[:：]\s*([^/]+)/);
+    const addressRaw = addressMatch?.[1]?.trim();
+    const address = addressRaw && addressRaw !== '不明' ? addressRaw : undefined;
+
+    spots.push({ name, time, address });
+  }
+  return spots;
+}
+
+// 全ピンが収まるよう地図の表示範囲を自動調整する。
+// react-leaflet v4には自動フィット機能がないため、useMapで地図インスタンスを取得して調整する。
+function FitBounds({ positions }: { positions: [number, number][] }) {
+  const map = useMap();
+  useEffect(() => {
+    if (positions.length === 0) return;
+    if (positions.length === 1) {
+      // ピンが1個のときはfitBoundsだと過剰にズームするので、中心表示にする
+      map.setView(positions[0], 13);
+    } else {
+      map.fitBounds(positions, { padding: [40, 40] });
+    }
+  }, [map, positions]);
+  return null;
+}
+
 function MapPreview({
   destination,
   planGenerated,
+  planText,
 }: {
   destination: string;
   planGenerated: boolean;
+  planText: string;
 }) {
+  // タイムライン行からジオコーディング対象を抽出（planText変化時のみ再計算）
+  const spots = useMemo(() => extractPlanSpots(planText), [planText]);
+  const [geoSpots, setGeoSpots] = useState<GeoSpot[]>([]);
+  const [isLocating, setIsLocating] = useState(false);
+
+  // 抽出スポットをNominatimで順番にジオコーディングし、取れたものから地図に反映する。
+  useEffect(() => {
+    if (!planGenerated || spots.length === 0) {
+      setGeoSpots([]);
+      setIsLocating(false);
+      return;
+    }
+
+    let cancelled = false;
+    setGeoSpots([]);
+    setIsLocating(true);
+
+    (async () => {
+      const collected: GeoSpot[] = [];
+      for (const spot of spots) {
+        if (cancelled) return;
+
+        // 住所はほぼ一意なので、住所があればまず住所でジオコーディングする
+        // （同名の海外地点への誤爆を防ぐのが狙い）。
+        let coord: LatLng | null = null;
+        if (spot.address) {
+          coord = await geocodePlace(spot.address);
+        }
+        if (cancelled) return;
+
+        // 住所が無い／ヒットしないときは、従来どおり「目的地＋スポット名」でフォールバック。
+        if (!coord) {
+          const fallbackQuery =
+            destination && !spot.name.includes(destination)
+              ? `${destination} ${spot.name}`
+              : spot.name;
+          coord = await geocodePlace(fallbackQuery); // 直列＋1.1秒間隔はgeocodePlace内で担保
+          if (cancelled) return;
+        }
+
+        // 日本の範囲外に出た座標は誤爆とみなしてピンを立てない（最終防波堤）
+        if (coord && isWithinJapan(coord)) {
+          collected.push({ ...spot, lat: coord.lat, lng: coord.lng });
+          setGeoSpots(collected.slice()); // 取得できたものから順次表示
+        }
+      }
+      if (!cancelled) setIsLocating(false);
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [planGenerated, destination, spots]);
+
+  const positions = useMemo<[number, number][]>(
+    () => geoSpots.map(spot => [spot.lat, spot.lng]),
+    [geoSpots],
+  );
+
+  // 座標が1件以上取れたら本物の地図を表示
+  if (geoSpots.length > 0) {
+    return (
+      <div className="map-preview">
+        <div className="map-leaflet">
+          <MapContainer
+            className="map-leaflet__canvas"
+            center={positions[0]}
+            zoom={13}
+            scrollWheelZoom
+          >
+            <TileLayer
+              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+            />
+            {geoSpots.map((spot, index) => (
+              <Marker key={`${spot.name}-${index}`} position={[spot.lat, spot.lng]}>
+                <Popup>
+                  {spot.time && (
+                    <>
+                      <strong>{spot.time}</strong>
+                      <br />
+                    </>
+                  )}
+                  {spot.name}
+                </Popup>
+              </Marker>
+            ))}
+            {positions.length >= 2 && (
+              <Polyline positions={positions} color="#2f80ed" weight={4} opacity={0.85} />
+            )}
+            <FitBounds positions={positions} />
+          </MapContainer>
+        </div>
+        <h2>{destination || '旅行先'}のルートマップ</h2>
+        <p>
+          訪問順に{geoSpots.length}か所のスポットを地図上で確認できます。
+          {isLocating ? '（残りのスポットを検索中…）' : ''}
+        </p>
+      </div>
+    );
+  }
+
+  // まだ1件も座標が取れていない＝ジオコーディング中はローディング表示
+  if (planGenerated && isLocating) {
+    return (
+      <div className="map-preview">
+        <div className="map-locating">
+          <div className="spinner" aria-hidden="true" />
+          <p>スポットの位置情報を取得して地図を準備しています…</p>
+        </div>
+      </div>
+    );
+  }
+
+  // プラン未生成、または座標が1件も取れなかったとき → 従来のプレースホルダー表示
   return (
     <div className="map-preview">
       <div className="map-surface">
@@ -1414,7 +1676,11 @@ function MapPreview({
         <span className="map-pin map-pin--three" />
       </div>
       <h2>{planGenerated ? `${destination}のルートプレビュー` : 'マップはプラン作成後に表示されます'}</h2>
-      <p>{planGenerated ? 'AIが提案したスポットを確認しながら、移動の流れを見直せます。' : '旅行プランができると、スポット間の位置関係を確認できます。'}</p>
+      <p>
+        {planGenerated
+          ? 'スポットの位置情報を取得できなかったため、地図を表示できませんでした。'
+          : '旅行プランができると、スポット間の位置関係を確認できます。'}
+      </p>
     </div>
   );
 }
