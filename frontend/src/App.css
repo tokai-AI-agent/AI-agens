@@ -114,6 +114,21 @@ button {
   color: #2f80ed;
 }
 
+/* 「保存したプラン」の件数バッジ */
+.nav-badge {
+  margin-left: auto;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: #2f80ed;
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 800;
+  display: grid;
+  place-items: center;
+}
+
 .travel-note {
   margin-top: auto;
   padding: 16px;
@@ -767,13 +782,15 @@ button {
 }
 
 .plan-hero {
+  position: relative;
   min-height: 190px;
   margin-bottom: 16px;
   border-radius: 8px;
   overflow: hidden;
-  background-position: center;
-  background-size: cover;
-  background-color: #e0f2fe;
+  /* 画像が取得できないときのベース背景（空白ヘッダー用） */
+  background:
+    linear-gradient(135deg, rgba(47, 128, 237, 0.18), rgba(86, 204, 242, 0.22)),
+    #eff8ff;
   box-shadow: 0 14px 34px rgba(31, 41, 55, 0.1);
 }
 
@@ -783,7 +800,17 @@ button {
     #eff8ff;
 }
 
+.plan-hero-image {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+}
+
 .plan-hero-overlay {
+  position: relative;
   min-height: 190px;
   padding: 22px;
   display: flex;
@@ -1056,6 +1083,11 @@ button {
   align-items: start;
 }
 
+/* 移動行など画像を出さない行は、テキストを全幅で表示する */
+.timeline-markdown-body--full {
+  grid-template-columns: minmax(0, 1fr);
+}
+
 .timeline-markdown-card h3 {
   margin: 0;
   color: #111827;
@@ -1097,6 +1129,22 @@ button {
   display: block;
   object-fit: cover;
   background: #eef2f7;
+}
+
+/* 写真の読み込み中（Wikipedia取得待ちなど）に表示するシマー */
+.image-loading {
+  background: linear-gradient(135deg, #e2e8f0 0%, #f1f5f9 50%, #e2e8f0 100%);
+  background-size: 200% 100%;
+  animation: imageShimmer 1.4s ease-in-out infinite;
+}
+
+@keyframes imageShimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
 }
 
 .timeline-markdown-placeholder {
@@ -1176,6 +1224,43 @@ button {
     #f0f9ff;
   background-size: 44px 44px;
   overflow: hidden;
+}
+
+/* Leafletは高さ0だと地図が描画されないため、コンテナに明示的な高さを与える */
+.map-leaflet {
+  height: 360px;
+  margin-bottom: 18px;
+  border: 1px solid #dbeafe;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.map-leaflet__canvas {
+  width: 100%;
+  height: 100%;
+}
+
+/* ジオコーディング中のローディング表示 */
+.map-locating {
+  height: 360px;
+  margin-bottom: 18px;
+  border: 1px solid #dbeafe;
+  border-radius: 8px;
+  background: #f0f9ff;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  padding: 24px;
+  text-align: center;
+}
+
+.map-locating p {
+  margin: 0;
+  color: #6b7280;
+  font-size: 14px;
+  line-height: 1.7;
 }
 
 .map-road {
@@ -1500,4 +1585,132 @@ button {
     width: 100%;
     max-height: 180px;
   }
+}
+
+/* 保存したプラン一覧モーダル */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  padding: 24px;
+  display: grid;
+  place-items: center;
+  background: rgba(17, 24, 39, 0.45);
+  backdrop-filter: blur(4px);
+}
+
+.modal-card {
+  width: min(560px, 100%);
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  background: #ffffff;
+  box-shadow: 0 24px 60px rgba(17, 24, 39, 0.24);
+  overflow: hidden;
+}
+
+.modal-header {
+  padding: 18px 20px;
+  border-bottom: 1px solid #e5e7eb;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.modal-header h2 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 900;
+}
+
+.modal-close {
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  background: #f2f6fb;
+  color: #6b7280;
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.modal-empty {
+  margin: 0;
+  padding: 28px 20px;
+  color: #6b7280;
+  font-size: 14px;
+  line-height: 1.7;
+}
+
+.saved-plan-list {
+  margin: 0;
+  padding: 14px;
+  list-style: none;
+  overflow-y: auto;
+  display: grid;
+  gap: 10px;
+}
+
+.saved-plan-item {
+  padding: 14px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  background: #ffffff;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.saved-plan-info {
+  min-width: 0;
+  display: grid;
+  gap: 4px;
+}
+
+.saved-plan-info strong {
+  font-size: 15px;
+  font-weight: 800;
+}
+
+.saved-plan-info span {
+  color: #2f80ed;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.saved-plan-info small {
+  color: #6b7280;
+  font-size: 12px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.saved-plan-actions {
+  flex: 0 0 auto;
+  display: flex;
+  gap: 8px;
+}
+
+.saved-plan-open,
+.saved-plan-delete {
+  min-height: 34px;
+  padding: 0 12px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.saved-plan-open {
+  background: #2f80ed;
+  color: #ffffff;
+}
+
+.saved-plan-delete {
+  background: #fff1f2;
+  color: #be123c;
+  border: 1px solid #fecdd3;
 }
