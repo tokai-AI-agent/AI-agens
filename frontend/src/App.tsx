@@ -6,6 +6,18 @@ import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png';
 import markerIcon from 'leaflet/dist/images/marker-icon.png';
 import markerShadow from 'leaflet/dist/images/marker-shadow.png';
 import './App.css';
+import {
+  AGENT_LANGUAGE_LABEL,
+  LANGUAGES,
+  LOCALE_MAP,
+  PURPOSE_ICONS,
+  PURPOSE_IDS,
+  t,
+  type IntakeStep,
+  type Language,
+  type MessageTextKey,
+  type PurposeId,
+} from './i18n';
 
 // Leafletのデフォルトマーカーアイコンは、画像URLを相対パスで自前解決するため
 // Viteのバンドル下では画像が見つからずピンが表示されない既知の問題がある。
@@ -35,6 +47,9 @@ type Message = {
   id: number;
   role: 'ai' | 'user';
   content: string;
+  // 定型のAI発話（案内文など）はキーを保持し、言語切り替え時に再翻訳して表示する。
+  // 動的な内容（保存メッセージやエラーなど）はキーを持たず、contentをそのまま表示する。
+  textKey?: MessageTextKey;
   time: string;
 };
 
@@ -49,59 +64,43 @@ type TravelConditionInput = {
   schedule: string;
   budget: string;
   people: string;
-  purposes: string[];
+  purposes: PurposeId[];
 };
 
 type PlanTab = 'schedule' | 'map' | 'tips';
 type MobileTab = 'chat' | 'plan' | 'map';
-type IntakeStep = 'destination' | 'departure' | 'schedule' | 'budget' | 'purpose' | 'ready';
-
-const purposeOptions = [
-  { label: '観光', icon: '🏛' },
-  { label: 'グルメ', icon: '🍽' },
-  { label: '自然', icon: '🌿' },
-  { label: '写真映え', icon: '📷' },
-  { label: 'のんびり', icon: '☕' },
-  { label: '予算を抑えたい', icon: '💴' },
-  { label: '移動を少なくしたい', icon: '🚶' },
-  { label: '雨の日向け', icon: '☂' },
-];
 
 const initialConditions: TravelConditionInput = {
   destination: '',
   departure: '',
   schedule: '',
   budget: '',
-  people: '指定なし',
+  people: '',
   purposes: [],
 };
 
-const intakePrompts: Record<IntakeStep, string> = {
-  destination: 'こんにちわ！あなたの旅行についてお手伝いします。まずは、行きたい旅行先を教えてください！',
-  departure: 'ありがとうございます！次に、どこから出発しますか？出発地点を教えてください！',
-  schedule: 'いいですね！次に日程を教えてください！',
-  budget: 'では次は予算を教えてください！',
-  purpose: '旅行の目的は何ですか？下の選択肢から選んでください。',
-  ready: '条件がそろいました！内容を確認して、プラン生成ボタンを押してください。',
-};
+function purposeLabel(language: Language, id: PurposeId) {
+  return t(language, 'purposeLabels')[id];
+}
 
-const intakeStepLabels: Record<IntakeStep, string> = {
-  destination: '目的地',
-  departure: '出発地点',
-  schedule: '日程',
-  budget: '予算',
-  purpose: '目的',
-  ready: '生成準備',
-};
+function joinPurposes(language: Language, purposes: PurposeId[]) {
+  return purposes.map(id => purposeLabel(language, id)).join(t(language, 'listSeparator'));
+}
 
-function nowLabel() {
-  return new Intl.DateTimeFormat('ja-JP', {
+function peopleDisplay(language: Language, people: string) {
+  return people.trim() ? people : t(language, 'peopleUnspecified');
+}
+
+function nowLabel(language: Language) {
+  return new Intl.DateTimeFormat(LOCALE_MAP[language], {
     hour: '2-digit',
     minute: '2-digit',
   }).format(new Date());
 }
 
-function buildPlanPrompt(conditions: TravelConditionInput, extraRequest?: string) {
+function buildPlanPrompt(conditions: TravelConditionInput, language: Language, extraRequest?: string) {
+  const people = peopleDisplay(language, conditions.people);
+  const purposes = joinPurposes(language, conditions.purposes);
   return `以下の条件に合う旅行プランを作成してください。
 
 ## ユーザーの旅行条件
@@ -109,8 +108,8 @@ function buildPlanPrompt(conditions: TravelConditionInput, extraRequest?: string
 - 行先: ${conditions.destination}
 - 日程: ${conditions.schedule}
 - 予算: ${conditions.budget}
-- 人数: ${conditions.people}
-- 目的: ${conditions.purposes.join('、')}
+- 人数: ${people}
+- 目的: ${purposes}
 ${extraRequest ? `- 追加要望: ${extraRequest}` : ''}
 
 ## 作成してほしい内容
@@ -135,7 +134,31 @@ ${extraRequest ? `- 追加要望: ${extraRequest}` : ''}
 - 画像は検索結果に含まれる実在URLだけを使い、架空URLは作らないでください。画像だけをまとめた章は作らず、該当する観光地・行先の行に付けてください。
 - 1日目の最初の観光地には、行先を代表する有名な観光名所を選び、可能な限り画像URLを付けてください。この画像はプランのヘッダー背景にも使います。
 
-プランは、ユーザーが画面上で読みやすいようにMarkdown形式で日本語で出力してください。`;
+## 回答言語（重要）
+- 必ず「${AGENT_LANGUAGE_LABEL[language]}」で出力してください。見出し・項目名・本文・コメントなど全文をこの言語にしてください。住所・地名などの固有名詞は原語表記のままで構いません。
+
+プランは、ユーザーが画面上で読みやすいようにMarkdown形式で出力してください。`;
+}
+
+// 既存プランの言語だけを切り替えるための翻訳依頼プロンプト。
+// 検索のやり直しはせず、住所・画像URL・時刻などのデータはそのまま、文章だけを翻訳してもらう。
+function buildTranslatePrompt(planText: string, language: Language) {
+  return `以下は既存の旅行プランです。新しく検索や作成はせず、内容をそのまま「${AGENT_LANGUAGE_LABEL[language]}」に翻訳してください。
+
+## 翻訳のルール
+- tavily-searchツールは使わないでください。これは新しいプラン作成ではなく、既存プランの翻訳です。
+- 見出し・項目名・コメント・注意点など、すべての文章を「${AGENT_LANGUAGE_LABEL[language]}」に翻訳してください。
+- 時刻（HH:MM）・予算の数値・URLはそのまま変更しないでください。
+- 住所・地名などの固有名詞は原語表記のままで構いません。
+- 「/ 住所：」「/ 画像URL：」に相当する項目ラベルは、対象言語に対応する以下の表記を必ずそのまま使ってください（フロントエンドがこのラベルを目印に解析するため）。
+  - 住所ラベル: 日本語「住所」/ English「Address」/ Deutsch「Adresse」/ 中文「地址」/ 한국어「주소」
+  - 画像URLラベル: 日本語「画像URL」/ English「Image URL」/ Deutsch「Bild-URL」/ 中文「图片链接」/ 한국어「이미지 URL」
+  - 住所が不明な場合の値: 日本語「不明」/ English「Unknown」/ Deutsch「Unbekannt」/ 中文「不明」/ 한국어「알 수 없음」
+- Markdown形式・行の構成（時刻つきの箇条書きなど）は元のプランと同じ構造を保ってください。
+
+## 翻訳対象のプラン
+
+${planText}`;
 }
 
 async function callAgent(messages: AgentMessage[]): Promise<string> {
@@ -160,14 +183,14 @@ async function callAgent(messages: AgentMessage[]): Promise<string> {
   );
 }
 
-function summarizeConditions(conditions: TravelConditionInput) {
+function summarizeConditions(conditions: TravelConditionInput, language: Language) {
   return [
-    `出発地点: ${conditions.departure}`,
-    `行先: ${conditions.destination}`,
-    `日程: ${conditions.schedule}`,
-    `予算: ${conditions.budget}`,
-    `人数: ${conditions.people}`,
-    `目的: ${conditions.purposes.join('、')}`,
+    `${t(language, 'summarizeDeparture')}: ${conditions.departure}`,
+    `${t(language, 'summarizeDestination')}: ${conditions.destination}`,
+    `${t(language, 'summarizeSchedule')}: ${conditions.schedule}`,
+    `${t(language, 'summarizeBudget')}: ${conditions.budget}`,
+    `${t(language, 'summarizePeople')}: ${peopleDisplay(language, conditions.people)}`,
+    `${t(language, 'summarizePurpose')}: ${joinPurposes(language, conditions.purposes)}`,
   ].join('\n');
 }
 
@@ -207,16 +230,37 @@ function persistSavedPlans(plans: SavedPlan[]) {
 }
 
 // 保存日時を「2026/06/17 14:30」のような読みやすい形式に整える。
-function formatSavedAt(iso: string) {
+function formatSavedAt(iso: string, language: Language) {
   const date = new Date(iso);
   if (Number.isNaN(date.getTime())) return '';
-  return new Intl.DateTimeFormat('ja-JP', {
+  return new Intl.DateTimeFormat(LOCALE_MAP[language], {
     year: 'numeric',
     month: '2-digit',
     day: '2-digit',
     hour: '2-digit',
     minute: '2-digit',
   }).format(date);
+}
+
+// localStorageのキー。言語選択を保持する。
+const LANGUAGE_KEY = 'travel-agent:language';
+
+function loadLanguage(): Language {
+  try {
+    const raw = localStorage.getItem(LANGUAGE_KEY);
+    if (raw && LANGUAGES.some(item => item.code === raw)) return raw as Language;
+  } catch {
+    // localStorageが使えない場合は既定値にフォールバック
+  }
+  return 'ja';
+}
+
+function persistLanguage(language: Language) {
+  try {
+    localStorage.setItem(LANGUAGE_KEY, language);
+  } catch {
+    // 容量超過/無効化時は黙って無視する
+  }
 }
 
 // 保存プランのIDを採番する。対応ブラウザではUUID、無ければ時刻文字列でフォールバック。
@@ -228,6 +272,7 @@ function createPlanId(): string {
 }
 
 export default function App() {
+  const [language, setLanguage] = useState<Language>(() => loadLanguage());
   const [conditions, setConditions] = useState<TravelConditionInput>(initialConditions);
   const [intakeStep, setIntakeStep] = useState<IntakeStep>('destination');
   const [planGenerated, setPlanGenerated] = useState(false);
@@ -236,14 +281,16 @@ export default function App() {
     {
       id: 1,
       role: 'ai',
-      content: intakePrompts.destination,
-      time: nowLabel(),
+      content: t(language, 'intakeDestinationPrompt'),
+      textKey: 'intakeDestinationPrompt',
+      time: nowLabel(language),
     },
   ]);
   const [input, setInput] = useState('');
   const [activePlanTab, setActivePlanTab] = useState<PlanTab>('schedule');
   const [mobileTab, setMobileTab] = useState<MobileTab>('chat');
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isTranslating, setIsTranslating] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   // 保存済みプランは初回レンダー時にlocalStorageから一度だけ読み込む（遅延初期化）。
   const [savedPlans, setSavedPlans] = useState<SavedPlan[]>(() => loadSavedPlans());
@@ -255,6 +302,11 @@ export default function App() {
     persistSavedPlans(savedPlans);
   }, [savedPlans]);
 
+  // 言語選択が変わるたびにlocalStorageへ同期する。
+  useEffect(() => {
+    persistLanguage(language);
+  }, [language]);
+
   const canGenerate = useMemo(
     () =>
       conditions.destination.trim() &&
@@ -262,8 +314,9 @@ export default function App() {
       conditions.schedule.trim() &&
       conditions.budget.trim() &&
       conditions.purposes.length > 0 &&
-      !isGenerating,
-    [conditions, isGenerating],
+      !isGenerating &&
+      !isTranslating,
+    [conditions, isGenerating, isTranslating],
   );
 
   const updateCondition = <Key extends keyof TravelConditionInput>(
@@ -273,31 +326,32 @@ export default function App() {
     setConditions(prev => ({ ...prev, [key]: value }));
   };
 
-  const togglePurpose = (label: string) => {
+  const togglePurpose = (id: PurposeId) => {
     setConditions(prev => ({
       ...prev,
-      purposes: prev.purposes.includes(label)
-        ? prev.purposes.filter(item => item !== label)
-        : [...prev.purposes, label],
+      purposes: prev.purposes.includes(id)
+        ? prev.purposes.filter(item => item !== id)
+        : [...prev.purposes, id],
     }));
     setErrorMessage('');
     if (intakeStep === 'purpose') {
       setIntakeStep('ready');
-      appendMessage('ai', intakePrompts.ready);
+      appendMessage('ai', t(language, 'intakeReadyPrompt'), 'intakeReadyPrompt');
     }
   };
 
-  const appendMessage = (role: Message['role'], content: string) => {
+  // textKeyを渡したAIの定型文は、言語切り替え時に再翻訳して表示できるようにする。
+  const appendMessage = (role: Message['role'], content: string, textKey?: MessageTextKey) => {
     setMessages(prev => [
       ...prev,
-      { id: Date.now() + prev.length, role, content, time: nowLabel() },
+      { id: Date.now() + prev.length, role, content, textKey, time: nowLabel(language) },
     ]);
   };
 
   // 現在表示中のプランを保存する。プラン未生成・本文が空のときは何もしない。
   const handleSavePlan = () => {
     if (!planGenerated || !planText.trim()) return;
-    const title = `${conditions.destination || '旅行'} 旅行プラン`;
+    const title = `${conditions.destination || t(language, 'savedPlanDefaultDestination')}${t(language, 'savedPlanTitleSuffix')}`;
     const newPlan: SavedPlan = {
       id: createPlanId(),
       title,
@@ -308,7 +362,7 @@ export default function App() {
     };
     // 新しいものを先頭に積む（最近保存した順で一覧表示するため）。
     setSavedPlans(prev => [newPlan, ...prev]);
-    appendMessage('ai', `「${title}」を保存しました。左メニューの「保存したプラン」からいつでも見返せます。`);
+    appendMessage('ai', `${t(language, 'savedMessagePrefix')}${title}${t(language, 'savedMessageSuffix')}`);
   };
 
   // 保存済みプランを画面に復元する。条件・本文・タブ表示をまとめて元に戻す。
@@ -321,7 +375,7 @@ export default function App() {
     setMobileTab('plan');
     setErrorMessage('');
     setIsSavedOpen(false);
-    appendMessage('ai', `保存した「${plan.title}」を読み込みました。`);
+    appendMessage('ai', `${t(language, 'loadedMessagePrefix')}${plan.title}${t(language, 'loadedMessageSuffix')}`);
   };
 
   // 指定IDの保存プランを削除する（localStorageへの反映は同期エフェクトが行う）。
@@ -338,7 +392,13 @@ export default function App() {
     setPlanGenerated(false);
     setPlanText('');
     setMessages([
-      { id: Date.now(), role: 'ai', content: intakePrompts.destination, time: nowLabel() },
+      {
+        id: Date.now(),
+        role: 'ai',
+        content: t(language, 'intakeDestinationPrompt'),
+        textKey: 'intakeDestinationPrompt',
+        time: nowLabel(language),
+      },
     ]);
     setInput('');
     setActivePlanTab('schedule');
@@ -349,24 +409,24 @@ export default function App() {
 
   const generatePlan = async (extraRequest?: string) => {
     if (!canGenerate) {
-      setErrorMessage('目的地、出発地点、日程、予算、目的をすべて入力してください。');
+      setErrorMessage(t(language, 'errorMissingFields'));
       return;
     }
 
-    const prompt = buildPlanPrompt(conditions, extraRequest);
+    const prompt = buildPlanPrompt(conditions, language, extraRequest);
     setErrorMessage('');
     setIsGenerating(true);
     setPlanGenerated(false);
     setMobileTab('plan');
-    appendMessage('user', `${summarizeConditions(conditions)}${extraRequest ? `\n追加要望: ${extraRequest}` : ''}`);
+    appendMessage('user', `${summarizeConditions(conditions, language)}${extraRequest ? `\n${t(language, 'purposeFieldLabel')}: ${extraRequest}` : ''}`);
 
     try {
       const text = await callAgent([{ role: 'user', content: prompt }]);
       setPlanText(text);
       setPlanGenerated(true);
-      appendMessage('ai', '条件に合わせた旅行プランを作成しました。右側のプラン表示エリアで確認できます。');
+      appendMessage('ai', t(language, 'planResultMessage'), 'planResultMessage');
     } catch (error) {
-      const message = `旅行プランの作成に失敗しました: ${String(error)}`;
+      const message = `${t(language, 'errorGenerateFailedPrefix')}${String(error)}`;
       setErrorMessage(message);
       appendMessage('ai', message);
     } finally {
@@ -374,9 +434,45 @@ export default function App() {
     }
   };
 
+  // 既存プランを別の言語に翻訳する。検索結果はそのまま、文章だけを翻訳し直す。
+  const translatePlan = async (newLanguage: Language) => {
+    if (!planGenerated || !planText.trim()) return;
+    setErrorMessage('');
+    setIsTranslating(true);
+    setMobileTab('plan');
+    try {
+      const translated = await callAgent([
+        { role: 'user', content: buildTranslatePrompt(planText, newLanguage) },
+      ]);
+      setPlanText(translated);
+      setMessages(prev => [
+        ...prev,
+        { id: Date.now() + prev.length, role: 'ai', content: t(newLanguage, 'planTranslatedMessage'), time: nowLabel(newLanguage) },
+      ]);
+    } catch (error) {
+      const message = `${t(newLanguage, 'errorTranslateFailedPrefix')}${String(error)}`;
+      setErrorMessage(message);
+      setMessages(prev => [
+        ...prev,
+        { id: Date.now() + prev.length, role: 'ai', content: message, time: nowLabel(newLanguage) },
+      ]);
+    } finally {
+      setIsTranslating(false);
+    }
+  };
+
+  // 言語セレクターの変更ハンドラ。プラン生成済みの場合は、同じ内容を新しい言語に翻訳する。
+  const handleLanguageChange = (newLanguage: Language) => {
+    if (newLanguage === language) return;
+    setLanguage(newLanguage);
+    if (planGenerated && planText.trim()) {
+      void translatePlan(newLanguage);
+    }
+  };
+
   const handleSend = async () => {
     const trimmed = input.trim();
-    if (!trimmed || isGenerating) return;
+    if (!trimmed || isGenerating || isTranslating) return;
     setInput('');
 
     if (planGenerated) {
@@ -390,7 +486,7 @@ export default function App() {
       updateCondition('destination', trimmed);
       setIntakeStep('departure');
       setErrorMessage('');
-      appendMessage('ai', intakePrompts.departure);
+      appendMessage('ai', t(language, 'intakeDeparturePrompt'), 'intakeDeparturePrompt');
       return;
     }
 
@@ -398,7 +494,7 @@ export default function App() {
       updateCondition('departure', trimmed);
       setIntakeStep('schedule');
       setErrorMessage('');
-      appendMessage('ai', intakePrompts.schedule);
+      appendMessage('ai', t(language, 'intakeSchedulePrompt'), 'intakeSchedulePrompt');
       return;
     }
 
@@ -406,7 +502,7 @@ export default function App() {
       updateCondition('schedule', trimmed);
       setIntakeStep('budget');
       setErrorMessage('');
-      appendMessage('ai', intakePrompts.budget);
+      appendMessage('ai', t(language, 'intakeBudgetPrompt'), 'intakeBudgetPrompt');
       return;
     }
 
@@ -414,36 +510,40 @@ export default function App() {
       updateCondition('budget', trimmed);
       setIntakeStep('purpose');
       setErrorMessage('');
-      appendMessage('ai', intakePrompts.purpose);
+      appendMessage('ai', t(language, 'intakePurposePrompt'), 'intakePurposePrompt');
       return;
     }
 
     if (intakeStep === 'purpose') {
-      appendMessage('ai', '旅行の目的は下の選択肢から選んでください。複数選択できます。');
+      appendMessage('ai', t(language, 'purposeReminder'), 'purposeReminder');
       return;
     }
 
-    appendMessage('ai', intakePrompts.ready);
+    appendMessage('ai', t(language, 'intakeReadyPrompt'), 'intakeReadyPrompt');
   };
 
   return (
     <div className="travel-app">
       <Sidebar
+        language={language}
+        onLanguageChange={handleLanguageChange}
         savedCount={savedPlans.length}
         onOpenSaved={() => setIsSavedOpen(true)}
         onNewChat={startNewChat}
       />
       <div className="workspace">
-        <Header planGenerated={planGenerated} onSavePlan={handleSavePlan} />
-        <MobileTabs activeTab={mobileTab} onChange={setMobileTab} />
+        <Header language={language} planGenerated={planGenerated} onSavePlan={handleSavePlan} />
+        <MobileTabs language={language} activeTab={mobileTab} onChange={setMobileTab} />
         <main className="content-grid">
           <section className={`chat-column mobile-panel ${mobileTab === 'chat' ? 'mobile-panel--active' : ''}`}>
             <ChatPanel
+              language={language}
               messages={messages}
               conditions={conditions}
               intakeStep={intakeStep}
               canGenerate={Boolean(canGenerate)}
               isGenerating={isGenerating}
+              isTranslating={isTranslating}
               errorMessage={errorMessage}
               input={input}
               planGenerated={planGenerated}
@@ -455,17 +555,20 @@ export default function App() {
           </section>
           <section className={`plan-column mobile-panel ${mobileTab === 'plan' ? 'mobile-panel--active' : ''}`}>
             <PlanPanel
+              language={language}
               planGenerated={planGenerated}
               planText={planText}
               conditions={conditions}
               activeTab={activePlanTab}
               isGenerating={isGenerating}
+              isTranslating={isTranslating}
               onTabChange={setActivePlanTab}
               onGeneratePlan={() => generatePlan()}
             />
           </section>
           <section className={`map-mobile-panel mobile-panel ${mobileTab === 'map' ? 'mobile-panel--active' : ''}`}>
             <MapPreview
+              language={language}
               destination={conditions.destination}
               planGenerated={planGenerated}
               planText={planText}
@@ -475,6 +578,7 @@ export default function App() {
       </div>
       {isSavedOpen && (
         <SavedPlansModal
+          language={language}
           plans={savedPlans}
           onClose={() => setIsSavedOpen(false)}
           onLoad={handleLoadPlan}
@@ -486,28 +590,32 @@ export default function App() {
 }
 
 function Header({
+  language,
   planGenerated,
   onSavePlan,
 }: {
+  language: Language;
   planGenerated: boolean;
   onSavePlan: () => void;
 }) {
   return (
     <header className="app-header">
       <div>
-        <p className="eyebrow">Travel AI Agent</p>
-        <h1>Travel AI Agent</h1>
-        <p>あなたにぴったりの旅行プランを提案します</p>
+        <p className="eyebrow">{t(language, 'appTitle')}</p>
+        <h1>{t(language, 'appTitle')}</h1>
+        <p>{t(language, 'appSubtitle')}</p>
       </div>
-      <ActionButtons planGenerated={planGenerated} onSavePlan={onSavePlan} />
+      <ActionButtons language={language} planGenerated={planGenerated} onSavePlan={onSavePlan} />
     </header>
   );
 }
 
 function ActionButtons({
+  language,
   planGenerated,
   onSavePlan,
 }: {
+  language: Language;
   planGenerated: boolean;
   onSavePlan: () => void;
 }) {
@@ -516,13 +624,13 @@ function ActionButtons({
       {/* プラン未生成のときは保存できないので無効化する */}
       <button className="ghost-action" type="button" disabled={!planGenerated} onClick={onSavePlan}>
         <span>💾</span>
-        プランを保存
+        {t(language, 'actionSave')}
       </button>
       <button className="ghost-action" type="button" disabled={!planGenerated}>
         <span>↗</span>
-        共有する
+        {t(language, 'actionShare')}
       </button>
-      <button className="icon-action" type="button" aria-label="メニュー">
+      <button className="icon-action" type="button" aria-label={t(language, 'actionMenuAria')}>
         <span />
         <span />
         <span />
@@ -531,22 +639,50 @@ function ActionButtons({
   );
 }
 
+function LanguageSelector({
+  language,
+  onLanguageChange,
+}: {
+  language: Language;
+  onLanguageChange: (language: Language) => void;
+}) {
+  return (
+    <label className="language-selector">
+      <span>{t(language, 'languageLabel')}</span>
+      <select
+        value={language}
+        onChange={event => onLanguageChange(event.target.value as Language)}
+      >
+        {LANGUAGES.map(item => (
+          <option key={item.code} value={item.code}>
+            {item.nativeLabel}
+          </option>
+        ))}
+      </select>
+    </label>
+  );
+}
+
 function Sidebar({
+  language,
+  onLanguageChange,
   savedCount,
   onOpenSaved,
   onNewChat,
 }: {
+  language: Language;
+  onLanguageChange: (language: Language) => void;
   savedCount: number;
   onOpenSaved: () => void;
   onNewChat: () => void;
 }) {
-  const items = [
-    ['チャット', '💬'],
-    ['旅行プラン', '🗓'],
-    ['マップ', '🗺'],
-    ['保存したプラン', '💾'],
-    ['お気に入り', '♡'],
-    ['設定', '⚙'],
+  const items: [string, string][] = [
+    [t(language, 'navChat'), '💬'],
+    [t(language, 'navPlan'), '🗓'],
+    [t(language, 'navMap'), '🗺'],
+    [t(language, 'navSaved'), '💾'],
+    [t(language, 'navFavorite'), '♡'],
+    [t(language, 'navSettings'), '⚙'],
   ];
 
   return (
@@ -554,14 +690,15 @@ function Sidebar({
       <div className="brand">
         <div className="brand-mark">✈</div>
         <div>
-          <strong>Travel AI</strong>
-          <span>Trip planner</span>
+          <strong>{t(language, 'brandName')}</strong>
+          <span>{t(language, 'brandTagline')}</span>
         </div>
       </div>
-      <nav className="nav-list" aria-label="メインナビゲーション">
+      <LanguageSelector language={language} onLanguageChange={onLanguageChange} />
+      <nav className="nav-list" aria-label="Main navigation">
         {items.map(([label, icon]) => {
-          const isSaved = label === '保存したプラン';
-          const isChat = label === 'チャット';
+          const isSaved = label === t(language, 'navSaved');
+          const isChat = label === t(language, 'navChat');
           // 「チャット」で新規チャット開始、「保存したプラン」で保存一覧モーダル。他は従来どおり装飾用。
           const onClick = isChat ? onNewChat : isSaved ? onOpenSaved : undefined;
           return (
@@ -584,8 +721,8 @@ function Sidebar({
           <span>☁</span>
           <span>📍</span>
         </div>
-        <strong>素敵な旅を♪</strong>
-        <p>会話しながら無理のない旅程を整えます。</p>
+        <strong>{t(language, 'travelNoteTitle')}</strong>
+        <p>{t(language, 'travelNoteDesc')}</p>
       </div>
     </aside>
   );
@@ -593,11 +730,13 @@ function Sidebar({
 
 // 保存済みプランの一覧モーダル。開く（復元）／削除ができる。
 function SavedPlansModal({
+  language,
   plans,
   onClose,
   onLoad,
   onDelete,
 }: {
+  language: Language;
   plans: SavedPlan[];
   onClose: () => void;
   onLoad: (plan: SavedPlan) => void;
@@ -609,39 +748,37 @@ function SavedPlansModal({
       className="modal-overlay"
       role="dialog"
       aria-modal="true"
-      aria-label="保存したプラン"
+      aria-label={t(language, 'modalSavedTitle')}
       onClick={onClose}
     >
       <div className="modal-card" onClick={event => event.stopPropagation()}>
         <div className="modal-header">
-          <h2>保存したプラン</h2>
-          <button className="modal-close" type="button" aria-label="閉じる" onClick={onClose}>
+          <h2>{t(language, 'modalSavedTitle')}</h2>
+          <button className="modal-close" type="button" aria-label={t(language, 'modalCloseAria')} onClick={onClose}>
             ×
           </button>
         </div>
         {plans.length === 0 ? (
-          <p className="modal-empty">
-            まだ保存したプランはありません。プランを作成して「プランを保存」を押すと、ここに一覧表示されます。
-          </p>
+          <p className="modal-empty">{t(language, 'modalEmpty')}</p>
         ) : (
           <ul className="saved-plan-list">
             {plans.map(plan => (
               <li key={plan.id} className="saved-plan-item">
                 <div className="saved-plan-info">
                   <strong>{plan.title}</strong>
-                  <span>{formatSavedAt(plan.savedAt)}</span>
-                  <small>{summarizeConditions(plan.conditions).replace(/\n/g, ' / ')}</small>
+                  <span>{formatSavedAt(plan.savedAt, language)}</span>
+                  <small>{summarizeConditions(plan.conditions, language).replace(/\n/g, ' / ')}</small>
                 </div>
                 <div className="saved-plan-actions">
                   <button className="saved-plan-open" type="button" onClick={() => onLoad(plan)}>
-                    開く
+                    {t(language, 'modalOpen')}
                   </button>
                   <button
                     className="saved-plan-delete"
                     type="button"
                     onClick={() => onDelete(plan.id)}
                   >
-                    削除
+                    {t(language, 'modalDelete')}
                   </button>
                 </div>
               </li>
@@ -654,24 +791,27 @@ function SavedPlansModal({
 }
 
 function MobileTabs({
+  language,
   activeTab,
   onChange,
 }: {
+  language: Language;
   activeTab: MobileTab;
   onChange: (tab: MobileTab) => void;
 }) {
+  const tabs: [MobileTab, string][] = [
+    ['chat', t(language, 'mobileTabChat')],
+    ['plan', t(language, 'mobileTabPlan')],
+    ['map', t(language, 'mobileTabMap')],
+  ];
   return (
-    <div className="mobile-tabs" role="tablist" aria-label="表示切り替え">
-      {[
-        ['chat', 'チャット'],
-        ['plan', 'プラン'],
-        ['map', 'マップ'],
-      ].map(([id, label]) => (
+    <div className="mobile-tabs" role="tablist" aria-label={t(language, 'mobileTabsAria')}>
+      {tabs.map(([id, label]) => (
         <button
           key={id}
           className={activeTab === id ? 'mobile-tab mobile-tab--active' : 'mobile-tab'}
           type="button"
-          onClick={() => onChange(id as MobileTab)}
+          onClick={() => onChange(id)}
         >
           {label}
         </button>
@@ -681,11 +821,13 @@ function MobileTabs({
 }
 
 function ChatPanel({
+  language,
   messages,
   conditions,
   intakeStep,
   canGenerate,
   isGenerating,
+  isTranslating,
   errorMessage,
   input,
   planGenerated,
@@ -694,16 +836,18 @@ function ChatPanel({
   onSend,
   onGeneratePlan,
 }: {
+  language: Language;
   messages: Message[];
   conditions: TravelConditionInput;
   intakeStep: IntakeStep;
   canGenerate: boolean;
   isGenerating: boolean;
+  isTranslating: boolean;
   errorMessage: string;
   input: string;
   planGenerated: boolean;
   onInputChange: (value: string) => void;
-  onTogglePurpose: (label: string) => void;
+  onTogglePurpose: (id: PurposeId) => void;
   onSend: () => void;
   onGeneratePlan: () => void;
 }) {
@@ -712,37 +856,39 @@ function ChatPanel({
       <div className="panel-heading">
         <div>
           <span className="status-dot" />
-          AIチャット
+          {t(language, 'chatHeading')}
         </div>
-        <small>{isGenerating ? '作成中' : planGenerated ? 'プラン作成済み' : '条件入力中'}</small>
+        <small>{isGenerating || isTranslating ? t(language, 'statusGenerating') : planGenerated ? t(language, 'statusDone') : t(language, 'statusInput')}</small>
       </div>
       <div className="message-list">
         {messages.map(message => (
-          <ChatMessage key={message.id} message={message} />
+          <ChatMessage key={message.id} language={language} message={message} />
         ))}
         <ConditionForm
+          language={language}
           conditions={conditions}
           intakeStep={intakeStep}
           canGenerate={canGenerate}
-          isGenerating={isGenerating}
+          isGenerating={isGenerating || isTranslating}
           errorMessage={errorMessage}
           onTogglePurpose={onTogglePurpose}
           onGeneratePlan={onGeneratePlan}
         />
-        {isGenerating && (
+        {(isGenerating || isTranslating) && (
           <div className="message-row message-row--ai">
             <div className="avatar avatar--ai">🤖</div>
             <div className="message-bubble">
-              <p>AIエージェントが最新情報を検索して、条件に合う旅行プランを作成しています...</p>
-              <time>{nowLabel()}</time>
+              <p>{t(language, isTranslating ? 'translatingMessage' : 'generatingMessage')}</p>
+              <time>{nowLabel(language)}</time>
             </div>
           </div>
         )}
       </div>
       <ChatInput
+        language={language}
         input={input}
         planGenerated={planGenerated}
-        isGenerating={isGenerating}
+        isGenerating={isGenerating || isTranslating}
         onInputChange={onInputChange}
         onSend={onSend}
       />
@@ -751,6 +897,7 @@ function ChatPanel({
 }
 
 function ConditionForm({
+  language,
   conditions,
   intakeStep,
   canGenerate,
@@ -759,38 +906,49 @@ function ConditionForm({
   onTogglePurpose,
   onGeneratePlan,
 }: {
+  language: Language;
   conditions: TravelConditionInput;
   intakeStep: IntakeStep;
   canGenerate: boolean;
   isGenerating: boolean;
   errorMessage: string;
-  onTogglePurpose: (label: string) => void;
+  onTogglePurpose: (id: PurposeId) => void;
   onGeneratePlan: () => void;
 }) {
+  const stepLabels: Record<IntakeStep, string> = {
+    destination: t(language, 'stepDestination'),
+    departure: t(language, 'stepDeparture'),
+    schedule: t(language, 'stepSchedule'),
+    budget: t(language, 'stepBudget'),
+    purpose: t(language, 'stepPurpose'),
+    ready: t(language, 'stepReady'),
+  };
   return (
     <div className="condition-card">
       <div className="condition-card__header">
         <div>
-          <span className="eyebrow">Trip Conditions</span>
-          <h2>会話で旅行条件を入力</h2>
+          <span className="eyebrow">{t(language, 'conditionEyebrow')}</span>
+          <h2>{t(language, 'conditionHeading')}</h2>
         </div>
-        <span className="required-note">{intakeStepLabels[intakeStep]}</span>
+        <span className="required-note">{stepLabels[intakeStep]}</span>
       </div>
-      <div className="conversation-progress" aria-label="入力済みの旅行条件">
-        <ConditionSummaryItem label="目的地" value={conditions.destination} active={intakeStep === 'destination'} />
-        <ConditionSummaryItem label="出発地点" value={conditions.departure} active={intakeStep === 'departure'} />
-        <ConditionSummaryItem label="日程" value={conditions.schedule} active={intakeStep === 'schedule'} />
-        <ConditionSummaryItem label="予算" value={conditions.budget} active={intakeStep === 'budget'} />
+      <div className="conversation-progress" aria-label={t(language, 'conditionProgressAria')}>
+        <ConditionSummaryItem language={language} label={stepLabels.destination} value={conditions.destination} active={intakeStep === 'destination'} />
+        <ConditionSummaryItem language={language} label={stepLabels.departure} value={conditions.departure} active={intakeStep === 'departure'} />
+        <ConditionSummaryItem language={language} label={stepLabels.schedule} value={conditions.schedule} active={intakeStep === 'schedule'} />
+        <ConditionSummaryItem language={language} label={stepLabels.budget} value={conditions.budget} active={intakeStep === 'budget'} />
         <ConditionSummaryItem
-          label="目的"
-          value={conditions.purposes.join('、')}
+          language={language}
+          label={stepLabels.purpose}
+          value={joinPurposes(language, conditions.purposes)}
           active={intakeStep === 'purpose' || intakeStep === 'ready'}
         />
       </div>
       {(intakeStep === 'purpose' || intakeStep === 'ready' || conditions.purposes.length > 0) && (
         <div className="purpose-field">
-          <span>目的</span>
+          <span>{t(language, 'purposeFieldLabel')}</span>
           <QuickReplyChips
+            language={language}
             selectedChips={conditions.purposes}
             onToggleChip={onTogglePurpose}
           />
@@ -805,7 +963,7 @@ function ConditionForm({
           onClick={onGeneratePlan}
         >
           <span>{isGenerating ? '⌛' : '✨'}</span>
-          {isGenerating ? 'AIがプラン作成中...' : 'AIエージェントでプランを作成'}
+          {isGenerating ? t(language, 'generateButtonBusy') : t(language, 'generateButtonIdle')}
         </button>
       )}
     </div>
@@ -813,10 +971,12 @@ function ConditionForm({
 }
 
 function ConditionSummaryItem({
+  language,
   label,
   value,
   active,
 }: {
+  language: Language;
   label: string;
   value: string;
   active: boolean;
@@ -824,18 +984,20 @@ function ConditionSummaryItem({
   return (
     <div className={`condition-summary-item ${active ? 'condition-summary-item--active' : ''}`}>
       <span>{label}</span>
-      <strong>{value || '未入力'}</strong>
+      <strong>{value || t(language, 'unspecified')}</strong>
     </div>
   );
 }
 
-function ChatMessage({ message }: { message: Message }) {
+function ChatMessage({ language, message }: { language: Language; message: Message }) {
   const isUser = message.role === 'user';
+  // textKeyを持つ定型文は、保存済みのcontentではなく現在の言語で再翻訳して表示する。
+  const displayContent = message.textKey ? t(language, message.textKey) : message.content;
   return (
     <div className={`message-row ${isUser ? 'message-row--user' : 'message-row--ai'}`}>
       {!isUser && <div className="avatar avatar--ai">🤖</div>}
       <div className="message-bubble">
-        <p>{message.content}</p>
+        <p>{displayContent}</p>
         <time>{message.time}</time>
       </div>
       {isUser && <div className="avatar avatar--user">👤</div>}
@@ -844,25 +1006,27 @@ function ChatMessage({ message }: { message: Message }) {
 }
 
 function QuickReplyChips({
+  language,
   selectedChips,
   onToggleChip,
 }: {
-  selectedChips: string[];
-  onToggleChip: (label: string) => void;
+  language: Language;
+  selectedChips: PurposeId[];
+  onToggleChip: (id: PurposeId) => void;
 }) {
   return (
     <div className="reply-chips">
-      {purposeOptions.map(option => {
-        const selected = selectedChips.includes(option.label);
+      {PURPOSE_IDS.map(id => {
+        const selected = selectedChips.includes(id);
         return (
           <button
-            key={option.label}
+            key={id}
             className={`reply-chip ${selected ? 'reply-chip--selected' : ''}`}
             type="button"
-            onClick={() => onToggleChip(option.label)}
+            onClick={() => onToggleChip(id)}
           >
-            <span>{option.icon}</span>
-            {option.label}
+            <span>{PURPOSE_ICONS[id]}</span>
+            {purposeLabel(language, id)}
           </button>
         );
       })}
@@ -871,23 +1035,31 @@ function QuickReplyChips({
 }
 
 function ChatInput({
+  language,
   input,
   planGenerated,
   isGenerating,
   onInputChange,
   onSend,
 }: {
+  language: Language;
   input: string;
   planGenerated: boolean;
   isGenerating: boolean;
   onInputChange: (value: string) => void;
   onSend: () => void;
 }) {
+  const quickReplies = [
+    t(language, 'quickReplySlow'),
+    t(language, 'quickReplyFood'),
+    t(language, 'quickReplyLessTravel'),
+    t(language, 'quickReplyRain'),
+  ];
   return (
     <div className="chat-input-wrap">
       {planGenerated && (
         <div className="adjust-actions">
-          {['もっとゆっくりしたい', 'グルメ多めにしたい', '移動を少なくしたい', '雨の日向けに変更'].map(label => (
+          {quickReplies.map(label => (
             <button key={label} type="button" onClick={() => onInputChange(label)}>{label}</button>
           ))}
         </div>
@@ -899,10 +1071,10 @@ function ChatInput({
           onKeyDown={event => {
             if (event.key === 'Enter') onSend();
           }}
-          placeholder={planGenerated ? '変更したい内容を入力してください…' : '回答を入力してください…'}
+          placeholder={planGenerated ? t(language, 'inputPlaceholderAdjust') : t(language, 'inputPlaceholderAnswer')}
           disabled={isGenerating}
         />
-        <button type="button" onClick={onSend} disabled={isGenerating} aria-label="送信">
+        <button type="button" onClick={onSend} disabled={isGenerating} aria-label={t(language, 'sendAria')}>
           ✈
         </button>
       </div>
@@ -911,41 +1083,46 @@ function ChatInput({
 }
 
 function PlanPanel({
+  language,
   planGenerated,
   planText,
   conditions,
   activeTab,
   isGenerating,
+  isTranslating,
   onTabChange,
   onGeneratePlan,
 }: {
+  language: Language;
   planGenerated: boolean;
   planText: string;
   conditions: TravelConditionInput;
   activeTab: PlanTab;
   isGenerating: boolean;
+  isTranslating: boolean;
   onTabChange: (tab: PlanTab) => void;
   onGeneratePlan: () => void;
 }) {
   return (
     <div className="plan-panel">
-      {isGenerating ? (
-        <LoadingPlanState conditions={conditions} />
+      {isGenerating || isTranslating ? (
+        <LoadingPlanState language={language} conditions={conditions} kind={isTranslating ? 'translate' : 'generate'} />
       ) : planGenerated ? (
         <TravelPlanTimeline
+          language={language}
           planText={planText}
           conditions={conditions}
           activeTab={activeTab}
           onTabChange={onTabChange}
         />
       ) : (
-        <EmptyPlanState onGeneratePlan={onGeneratePlan} />
+        <EmptyPlanState language={language} onGeneratePlan={onGeneratePlan} />
       )}
     </div>
   );
 }
 
-function EmptyPlanState({ onGeneratePlan }: { onGeneratePlan: () => void }) {
+function EmptyPlanState({ language, onGeneratePlan }: { language: Language; onGeneratePlan: () => void }) {
   return (
     <div className="empty-plan">
       <div className="empty-visual" aria-hidden="true">
@@ -955,9 +1132,9 @@ function EmptyPlanState({ onGeneratePlan }: { onGeneratePlan: () => void }) {
         <span className="visual-card">🗓</span>
         <span className="visual-case">🧳</span>
       </div>
-      <h2>旅行プランはまだ作成されていません</h2>
-      <p>AIとの会話で行き先や希望条件を入力すると、ここにスケジュール形式の旅行プランが表示されます。</p>
-      <div className="skeleton-preview" aria-label="プラン作成後に表示される内容のプレビュー">
+      <h2>{t(language, 'emptyPlanHeading')}</h2>
+      <p>{t(language, 'emptyPlanDesc')}</p>
+      <div className="skeleton-preview" aria-label={t(language, 'skeletonPreviewAria')}>
         {[1, 2, 3].map(item => (
           <div className="skeleton-row" key={item}>
             <div className="skeleton-time" />
@@ -970,18 +1147,28 @@ function EmptyPlanState({ onGeneratePlan }: { onGeneratePlan: () => void }) {
         ))}
       </div>
       <button className="muted-generate" type="button" onClick={onGeneratePlan}>
-        入力条件から作成
+        {t(language, 'emptyPlanButton')}
       </button>
     </div>
   );
 }
 
-function LoadingPlanState({ conditions }: { conditions: TravelConditionInput }) {
+function LoadingPlanState({
+  language,
+  conditions,
+  kind,
+}: {
+  language: Language;
+  conditions: TravelConditionInput;
+  kind: 'generate' | 'translate';
+}) {
+  const headingSuffix = kind === 'translate' ? t(language, 'loadingTranslateHeadingSuffix') : t(language, 'loadingPlanHeadingSuffix');
+  const desc = kind === 'translate' ? t(language, 'loadingTranslateDesc') : t(language, 'loadingPlanDesc');
   return (
     <div className="empty-plan loading-plan">
       <div className="spinner" aria-hidden="true" />
-      <h2>{conditions.destination || '旅行先'}のプランを作成中です</h2>
-      <p>AIエージェントが観光、グルメ、交通情報を検索し、条件に合うプランを組み立てています。</p>
+      <h2>{(conditions.destination || t(language, 'loadingPlanFallbackDestination'))}{headingSuffix}</h2>
+      <p>{desc}</p>
       <div className="skeleton-preview">
         {[1, 2, 3, 4].map(item => (
           <div className="skeleton-row" key={item}>
@@ -999,63 +1186,93 @@ function LoadingPlanState({ conditions }: { conditions: TravelConditionInput }) 
 }
 
 function TravelPlanTimeline({
+  language,
   planText,
   conditions,
   activeTab,
   onTabChange,
 }: {
+  language: Language;
   planText: string;
   conditions: TravelConditionInput;
   activeTab: PlanTab;
   onTabChange: (tab: PlanTab) => void;
 }) {
+  const tabs: [PlanTab, string][] = [
+    ['schedule', t(language, 'tabSchedule')],
+    ['map', t(language, 'tabMap')],
+    ['tips', t(language, 'tabTips')],
+  ];
   return (
     <div className="generated-plan">
       <div className="plan-hero">
-        <PlanHeroImage planText={planText} destination={conditions.destination} />
+        <PlanHeroImage language={language} planText={planText} destination={conditions.destination} />
         <div className="plan-hero-overlay">
           <div className="plan-title-row">
             <div>
-              <p className="eyebrow">Generated by AI Agent</p>
-              <h2>{conditions.destination} 旅行プラン</h2>
+              <p className="eyebrow">{t(language, 'generatedByLabel')}</p>
+              <h2>{conditions.destination}{t(language, 'planTitleSuffix')}</h2>
             </div>
-            <button className="arrange-button" type="button">アレンジ</button>
+            <button className="arrange-button" type="button">{t(language, 'arrangeButton')}</button>
           </div>
           <div className="condition-chips">
-            {conditions.departure && <span>{conditions.departure} 発</span>}
+            {conditions.departure && <span>{conditions.departure}{t(language, 'departureChipSuffix')}</span>}
             <span>{conditions.schedule}</span>
             <span>{conditions.budget}</span>
-            <span>{conditions.people}</span>
-            {conditions.purposes.map(label => (
-              <span key={label}>{label}</span>
+            <span>{peopleDisplay(language, conditions.people)}</span>
+            {conditions.purposes.map(id => (
+              <span key={id}>{purposeLabel(language, id)}</span>
             ))}
           </div>
         </div>
       </div>
       <div className="plan-tabs">
-        {[
-          ['schedule', 'スケジュール'],
-          ['map', 'マップ'],
-          ['tips', 'おすすめ情報'],
-        ].map(([id, label]) => (
+        {tabs.map(([id, label]) => (
           <button
             key={id}
             type="button"
             className={activeTab === id ? 'plan-tab plan-tab--active' : 'plan-tab'}
-            onClick={() => onTabChange(id as PlanTab)}
+            onClick={() => onTabChange(id)}
           >
             {label}
           </button>
         ))}
       </div>
-      {activeTab === 'schedule' && <PlanMarkdown text={planText} destination={conditions.destination} />}
+      {activeTab === 'schedule' && <PlanMarkdown language={language} text={planText} destination={conditions.destination} />}
       {activeTab === 'map' && (
-        <MapPreview destination={conditions.destination} planGenerated planText={planText} />
+        <MapPreview language={language} destination={conditions.destination} planGenerated planText={planText} />
       )}
-      {activeTab === 'tips' && <PlanSummaryCards conditions={conditions} />}
+      {activeTab === 'tips' && <PlanSummaryCards language={language} conditions={conditions} />}
     </div>
   );
 }
+
+// AIの出力言語によらず構造化フィールド（住所・画像URL）を解析できるよう、
+// 5言語分のラベル表記をまとめて正規表現に使う。agent.tsの指示も同じラベルを使う。
+const ADDRESS_LABEL_PATTERN = '住所|Address|Adresse|地址|주소';
+const IMAGE_LABEL_PATTERN = '画像URL|Image URL|Bild-URL|图片链接|이미지 URL';
+
+// 英数字の短い単語（to/from/via等）はCJKと混在させると意図せぬ部分一致を起こす
+// （例: 「Tokyo」が「to」を含むなど）。CJKとラテン文字を分けて、ラテン文字側だけ
+// \b（単語境界）で囲むことで、単語単位の一致のみを許可する。
+function combinedKeywordPattern(cjkWords: string, latinWords: string): string {
+  return `(?:${cjkWords})|\\b(?:${latinWords})\\b`;
+}
+
+// 移動・出発・到着・チェックイン等を示す語（観光地ではない行を判定するため）
+const NON_SPOT_KEYWORD_PATTERN = combinedKeywordPattern(
+  '出発|到着|帰宅|帰路|解散|チェックイン|チェックアウト|出发|到达|返程|入住|退房|출발|도착|귀환|체크인|체크아웃',
+  'Departure|Arrival|Return|Check-in|Check-out|Abfahrt|Ankunft|Rückkehr',
+);
+const MOVE_KEYWORD_PATTERN = combinedKeywordPattern('移動|交通|이동', 'Move|Travel|Fahrt|Transfer');
+const MOVE_DIRECTION_PATTERN = combinedKeywordPattern('から|へ|→|まで|从|到|에서|까지', 'from|to|via|von|nach');
+// スポット名から取り除く「食事・観光などの動作」を示す語（5言語分）
+const ACTIVITY_WORD_PATTERN = combinedKeywordPattern(
+  '昼食|夕食|朝食|ランチ|ディナー|カフェ|グルメ|食事|食べ歩き|買い物|ショッピング|休憩|散策|見学|観光|参拝|鑑賞|体験|宿泊|滞在|' +
+    '午餐|晚餐|早餐|咖啡|购物|观光|休息|漫步|参观|住宿|점심|저녁|아침|카페|쇼핑|관광|휴식|산책|견학|숙박',
+  'Lunch|Dinner|Breakfast|Cafe|Café|Coffee Break|Shopping|Sightseeing|Break|Stroll|Visit|Stay|' +
+    'Mittagessen|Abendessen|Frühstück|Café-Pause|Einkaufen|Besichtigung|Pause|Aufenthalt',
+);
 
 function getHeroImageFromPlan(text: string) {
   const lines = text
@@ -1063,8 +1280,9 @@ function getHeroImageFromPlan(text: string) {
     .replace(/```$/i, '')
     .split('\n');
 
+  const imageLabelRegex = new RegExp(`(?:${IMAGE_LABEL_PATTERN})[:：]\\s*(https?:\\/\\/\\S+)`);
   for (const line of lines) {
-    const match = line.match(/画像URL[:：]\s*(https?:\/\/\S+)/);
+    const match = line.match(imageLabelRegex);
     if (match?.[1]) return match[1];
   }
 
@@ -1087,7 +1305,7 @@ function cleanSpotTitle(rawTitle: string): string {
   return rawTitle
     .replace(/[（(][^）)]*[）)]/g, '')
     .replace(
-      /(での|で|にて|を|へ)?(昼食|夕食|朝食|ランチ|ディナー|カフェ|グルメ|食事|食べ歩き|買い物|ショッピング|休憩|散策|見学|観光|参拝|鑑賞|体験|宿泊|滞在).*$/u,
+      new RegExp(`(での|で|にて|を|へ)?(${ACTIVITY_WORD_PATTERN}).*$`, 'iu'),
       '',
     )
     .replace(/[「」『』]/g, '')
@@ -1098,8 +1316,8 @@ function cleanSpotTitle(rawTitle: string): string {
 // これらの行には観光地画像を付けない（駅などの無関係な画像が入るのを防ぐ）。
 function isNonSpotLine(title: string): boolean {
   return (
-    /(出発|到着|帰宅|帰路|解散|チェックイン|チェックアウト)/.test(title) ||
-    (/移動/.test(title) && /(から|へ|→|まで)/.test(title))
+    new RegExp(NON_SPOT_KEYWORD_PATTERN, 'i').test(title) ||
+    (new RegExp(MOVE_KEYWORD_PATTERN, 'i').test(title) && new RegExp(MOVE_DIRECTION_PATTERN, 'i').test(title))
   );
 }
 
@@ -1115,12 +1333,22 @@ function isRelevantTitle(spotName: string, pageTitle: string): boolean {
   return longer.includes(shorter);
 }
 
+// Wikipediaのサブドメイン（言語版）。プランの出力言語に合わせて検索することで、
+// スポット名が日本語以外で書かれていても該当記事を見つけられるようにする。
+const WIKIPEDIA_DOMAIN: Record<Language, string> = {
+  ja: 'ja.wikipedia.org',
+  en: 'en.wikipedia.org',
+  de: 'de.wikipedia.org',
+  zh: 'zh.wikipedia.org',
+  ko: 'ko.wikipedia.org',
+};
+
 // 地名でWikipediaのページを直接引き、サムネイルURLを返す（リダイレクト追従）。
 // 名前で直接引くので、得られる画像は必ずその地名のもの。見つからなければnull。
-async function fetchWikipediaThumbnailByTitle(title: string): Promise<string | null> {
+async function fetchWikipediaThumbnailByTitle(title: string, domain: string): Promise<string | null> {
   try {
     const url =
-      `https://ja.wikipedia.org/w/api.php?action=query&format=json&origin=*&redirects=1` +
+      `https://${domain}/w/api.php?action=query&format=json&origin=*&redirects=1` +
       `&titles=${encodeURIComponent(title)}&prop=pageimages&piprop=thumbnail&pithumbsize=480`;
     const res = await fetch(url);
     if (!res.ok) return null;
@@ -1142,10 +1370,11 @@ async function fetchWikipediaThumbnailByTitle(title: string): Promise<string | n
 async function fetchWikipediaThumbnailBySearch(
   term: string,
   spotName: string,
+  domain: string,
 ): Promise<string | null> {
   try {
     const url =
-      `https://ja.wikipedia.org/w/api.php?action=query&format=json&origin=*` +
+      `https://${domain}/w/api.php?action=query&format=json&origin=*` +
       `&generator=search&gsrsearch=${encodeURIComponent(term)}&gsrlimit=5` +
       `&prop=pageimages&piprop=thumbnail&pithumbsize=480`;
     const res = await fetch(url);
@@ -1168,28 +1397,34 @@ async function fetchWikipediaThumbnailBySearch(
 // 観光地名でWikipediaのサムネイルを探す。
 // (1) 地名で直接ページを引く → (2) 関連性チェック付きの全文検索 → (3) 目的地を足して再検索。
 // いずれも該当しなければnull（呼び出し側で空白表示にする）。
-async function fetchWikipediaImage(title: string, destination: string): Promise<string | null> {
+// プランの出力言語に対応するWikipedia言語版を検索する（例: 英語プランならen.wikipedia.org）。
+// 見つからない場合は日本語版にもフォールバックする（観光地は日本語版の情報が充実しているため）。
+async function fetchWikipediaImage(title: string, destination: string, language: Language): Promise<string | null> {
   const spotName = cleanSpotTitle(title);
   if (spotName.length < 2) return null;
   // 移動・出発などスポットではない行には画像を付けない
   if (isNonSpotLine(title)) return null;
 
-  const cacheKey = `${destination}|${spotName}`;
+  const cacheKey = `${language}|${destination}|${spotName}`;
   let lookup = wikipediaImageCache.get(cacheKey);
   if (!lookup) {
     lookup = (async () => {
-      const direct = await fetchWikipediaThumbnailByTitle(spotName);
-      if (direct) return direct;
+      const domains = Array.from(new Set([WIKIPEDIA_DOMAIN[language], WIKIPEDIA_DOMAIN.ja]));
+      for (const domain of domains) {
+        const direct = await fetchWikipediaThumbnailByTitle(spotName, domain);
+        if (direct) return direct;
 
-      const searched = await fetchWikipediaThumbnailBySearch(spotName, spotName);
-      if (searched) return searched;
+        const searched = await fetchWikipediaThumbnailBySearch(spotName, spotName, domain);
+        if (searched) return searched;
 
-      if (destination && !spotName.includes(destination)) {
-        const searchedWithDest = await fetchWikipediaThumbnailBySearch(
-          `${destination} ${spotName}`,
-          spotName,
-        );
-        if (searchedWithDest) return searchedWithDest;
+        if (destination && !spotName.includes(destination)) {
+          const searchedWithDest = await fetchWikipediaThumbnailBySearch(
+            `${destination} ${spotName}`,
+            spotName,
+            domain,
+          );
+          if (searchedWithDest) return searchedWithDest;
+        }
       }
 
       return null;
@@ -1202,12 +1437,14 @@ async function fetchWikipediaImage(title: string, destination: string): Promise<
 
 // tavily画像があれば優先し、無い／読み込み失敗時はWikipediaを試す。それも取得できなければ空白にする。
 function SpotImage({
+  language,
   title,
   destination,
   primarySrc,
   alt,
   className = 'timeline-markdown-image',
 }: {
+  language: Language;
   title: string;
   destination: string;
   primarySrc?: string;
@@ -1227,7 +1464,7 @@ function SpotImage({
   useEffect(() => {
     if (stage !== 'wikipedia') return;
     let cancelled = false;
-    fetchWikipediaImage(title, destination).then(found => {
+    fetchWikipediaImage(title, destination, language).then(found => {
       if (cancelled) return;
       if (found) {
         setSrc(found);
@@ -1239,7 +1476,7 @@ function SpotImage({
     return () => {
       cancelled = true;
     };
-  }, [stage, title, destination]);
+  }, [stage, title, destination, language]);
 
   // 画像の読み込みに失敗したら次のフォールバックへ
   const handleError = () => {
@@ -1267,21 +1504,30 @@ function SpotImage({
   );
 }
 
-function PlanHeroImage({ planText, destination }: { planText: string; destination: string }) {
+function PlanHeroImage({
+  language,
+  planText,
+  destination,
+}: {
+  language: Language;
+  planText: string;
+  destination: string;
+}) {
   const primary = useMemo(() => getHeroImageFromPlan(planText) || undefined, [planText]);
-  const label = destination || '旅行先';
+  const label = destination || t(language, 'loadingPlanFallbackDestination');
   return (
     <SpotImage
+      language={language}
       className="plan-hero-image"
       title={label}
       destination={destination}
       primarySrc={primary}
-      alt={`${label}の風景`}
+      alt={label}
     />
   );
 }
 
-function PlanMarkdown({ text, destination }: { text: string; destination: string }) {
+function PlanMarkdown({ language, text, destination }: { language: Language; text: string; destination: string }) {
   const lines = text
     .replace(/^```markdown\s*/i, '')
     .replace(/```$/i, '')
@@ -1310,6 +1556,7 @@ function PlanMarkdown({ text, destination }: { text: string; destination: string
           return (
             <TimelineMarkdownItem
               key={index}
+              language={language}
               text={trimmed}
               imageBank={imageBank}
               destination={destination}
@@ -1324,10 +1571,12 @@ function PlanMarkdown({ text, destination }: { text: string; destination: string
 }
 
 function TimelineMarkdownItem({
+  language,
   text,
   imageBank,
   destination,
 }: {
+  language: Language;
   text: string;
   imageBank: Record<string, string>;
   destination: string;
@@ -1336,7 +1585,7 @@ function TimelineMarkdownItem({
   const match = normalized.match(/^(\d{1,2}:\d{2})\s*-\s*(.+)$/);
   const time = match?.[1] ?? '';
   const detail = match?.[2] ?? normalized;
-  const imageUrlMatch = detail.match(/\s\/\s*画像URL[:：]\s*(https?:\/\/\S+)/);
+  const imageUrlMatch = detail.match(new RegExp(`\\s\\/\\s*(?:${IMAGE_LABEL_PATTERN})[:：]\\s*(https?:\\/\\/\\S+)`));
   const inlineImageSrc = imageUrlMatch?.[1];
   const detailWithoutImage = imageUrlMatch ? detail.replace(imageUrlMatch[0], '') : detail;
   const [titlePart, ...metaParts] = detailWithoutImage.split(/\s*\/\s*/);
@@ -1374,6 +1623,7 @@ function TimelineMarkdownItem({
           </div>
           {!isMoveLine && (
             <SpotImage
+              language={language}
               title={normalizedTitle}
               destination={destination}
               primarySrc={matchedImageSrc}
@@ -1400,23 +1650,23 @@ function TravelSpotCard({ text }: { text: string }) {
   );
 }
 
-function PlanSummaryCards({ conditions }: { conditions: TravelConditionInput }) {
+function PlanSummaryCards({ language, conditions }: { language: Language; conditions: TravelConditionInput }) {
   return (
     <div className="summary-grid">
       <div className="summary-card">
         <span>🧭</span>
-        <strong>旅行条件</strong>
-        <p>{conditions.departure} → {conditions.destination} / {conditions.schedule} / {conditions.people} / {conditions.budget}</p>
+        <strong>{t(language, 'summaryConditionsTitle')}</strong>
+        <p>{conditions.departure} → {conditions.destination} / {conditions.schedule} / {peopleDisplay(language, conditions.people)} / {conditions.budget}</p>
       </div>
       <div className="summary-card">
         <span>🎯</span>
-        <strong>目的</strong>
-        <p>{conditions.purposes.join('、')}</p>
+        <strong>{t(language, 'summaryPurposeTitle')}</strong>
+        <p>{joinPurposes(language, conditions.purposes)}</p>
       </div>
       <div className="summary-card">
         <span>💡</span>
-        <strong>再調整</strong>
-        <p>チャット入力欄から「もっとゆっくり」「グルメ多め」などを送ると、同じ条件をもとに再生成できます。</p>
+        <strong>{t(language, 'summaryReadjustTitle')}</strong>
+        <p>{t(language, 'summaryReadjustText')}</p>
       </div>
     </div>
   );
@@ -1462,9 +1712,13 @@ function geocodePlace(query: string): Promise<LatLng | null> {
     try {
       await previous;
       await sleep(GEOCODE_MIN_GAP_MS);
+      // AIが英語・ドイツ語などに翻訳したアドレスはOSMの住所表記と一致しにくいため、
+      // 国名を補ってヒット率を上げる（既に「Japan」「日本」を含む場合は付けない）。
+      const hasCountry = /japan|日本/i.test(key);
+      const searchQuery = hasCountry ? key : `${key}, Japan`;
       const url =
         `https://nominatim.openstreetmap.org/search?format=json&limit=1` +
-        `&accept-language=ja&q=${encodeURIComponent(key)}`;
+        `&accept-language=ja&q=${encodeURIComponent(searchQuery)}`;
       // ブラウザではUser-Agentを設定できないため、言語ヒントのみ付与する
       const res = await fetch(url, { headers: { 'Accept-Language': 'ja' } });
       if (!res.ok) return null;
@@ -1506,7 +1760,7 @@ function extractPlanSpots(planText: string): PlanSpot[] {
 
     const time = match[1];
     // 画像URL部分を取り除いてから「スポット名：コメント / ...」の先頭タイトルを取り出す
-    const detail = match[2].replace(/\s\/\s*画像URL[:：]\s*\S+/g, '');
+    const detail = match[2].replace(new RegExp(`\\s\\/\\s*(?:${IMAGE_LABEL_PATTERN})[:：]\\s*\\S+`, 'g'), '');
     const titlePart = detail.split(/\s*\/\s*/)[0];
     const rawTitle = titlePart.split(/[:：]/)[0].trim();
     if (!rawTitle || isNonSpotLine(rawTitle)) continue; // 移動・出発・到着などはスキップ
@@ -1516,10 +1770,11 @@ function extractPlanSpots(planText: string): PlanSpot[] {
     seen.add(name);
 
     // 「/ 住所：◯◯」フィールドを抽出（/区切りの1フィールドなので次の/手前まで）。
-    // 「不明」は推測住所ではないので住所として扱わず、名前フォールバックに回す。
-    const addressMatch = match[2].match(/住所[:：]\s*([^/]+)/);
+    // 「不明」系（不明、未知、Unknown、Unbekannt、알 수 없음）は推測住所ではないので住所として扱わず、名前フォールバックに回す。
+    const addressMatch = match[2].match(new RegExp(`(?:${ADDRESS_LABEL_PATTERN})[:：]\\s*([^/]+)`));
     const addressRaw = addressMatch?.[1]?.trim();
-    const address = addressRaw && addressRaw !== '不明' ? addressRaw : undefined;
+    const isUnknownAddress = !!addressRaw && /^(不明|未知|Unknown|Unbekannt|알 수 없음)$/i.test(addressRaw);
+    const address = addressRaw && !isUnknownAddress ? addressRaw : undefined;
 
     spots.push({ name, time, address });
   }
@@ -1543,10 +1798,12 @@ function FitBounds({ positions }: { positions: [number, number][] }) {
 }
 
 function MapPreview({
+  language,
   destination,
   planGenerated,
   planText,
 }: {
+  language: Language;
   destination: string;
   planGenerated: boolean;
   planText: string;
@@ -1644,10 +1901,10 @@ function MapPreview({
             <FitBounds positions={positions} />
           </MapContainer>
         </div>
-        <h2>{destination || '旅行先'}のルートマップ</h2>
+        <h2>{(destination || t(language, 'loadingPlanFallbackDestination'))}{t(language, 'mapRouteTitleSuffix')}</h2>
         <p>
-          訪問順に{geoSpots.length}か所のスポットを地図上で確認できます。
-          {isLocating ? '（残りのスポットを検索中…）' : ''}
+          {t(language, 'mapRouteDescPrefix')}{geoSpots.length}{t(language, 'mapRouteDescSuffix')}
+          {isLocating ? t(language, 'mapSearchingRemaining') : ''}
         </p>
       </div>
     );
@@ -1659,7 +1916,7 @@ function MapPreview({
       <div className="map-preview">
         <div className="map-locating">
           <div className="spinner" aria-hidden="true" />
-          <p>スポットの位置情報を取得して地図を準備しています…</p>
+          <p>{t(language, 'mapLocatingDesc')}</p>
         </div>
       </div>
     );
@@ -1675,11 +1932,11 @@ function MapPreview({
         <span className="map-pin map-pin--two" />
         <span className="map-pin map-pin--three" />
       </div>
-      <h2>{planGenerated ? `${destination}のルートプレビュー` : 'マップはプラン作成後に表示されます'}</h2>
+      <h2>{planGenerated ? `${destination}${t(language, 'mapPreviewTitleGeneratedSuffix')}` : t(language, 'mapPreviewTitleEmpty')}</h2>
       <p>
         {planGenerated
-          ? 'スポットの位置情報を取得できなかったため、地図を表示できませんでした。'
-          : '旅行プランができると、スポット間の位置関係を確認できます。'}
+          ? t(language, 'mapPreviewDescFailed')
+          : t(language, 'mapPreviewDescEmpty')}
       </p>
     </div>
   );
