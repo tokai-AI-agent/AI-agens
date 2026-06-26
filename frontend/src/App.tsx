@@ -55,6 +55,8 @@ type TravelConditionInput = {
 type PlanTab = 'schedule' | 'map' | 'tips';
 type MobileTab = 'chat' | 'plan' | 'map';
 type IntakeStep = 'destination' | 'departure' | 'schedule' | 'budget' | 'purpose' | 'ready';
+// 入力ミスを直すために、後から編集できる条件フィールド。
+type EditableField = 'destination' | 'departure' | 'schedule' | 'budget' | 'purposes';
 
 const purposeOptions = [
   { label: '観光', icon: '🏛' },
@@ -66,6 +68,16 @@ const purposeOptions = [
   { label: '移動を少なくしたい', icon: '🚶' },
   { label: '雨の日向け', icon: '☂' },
 ];
+
+// 定義済みの目的ラベル一覧。purposes配列の中でこれに該当しない値が、
+// ユーザーが「その他」から自由入力した目的だと判定するために使う。
+const predefinedPurposeLabels = purposeOptions.map(option => option.label);
+
+// purposes配列から自由入力された目的（定義済みラベル以外の1件）を取り出す。
+// 「その他」は1件だけ持てる前提なので、最初に見つかった該当値を返す。
+function getCustomPurpose(purposes: string[]): string {
+  return purposes.find(purpose => !predefinedPurposeLabels.includes(purpose)) ?? '';
+}
 
 const initialConditions: TravelConditionInput = {
   destination: '',
@@ -92,6 +104,15 @@ const intakeStepLabels: Record<IntakeStep, string> = {
   budget: '予算',
   purpose: '目的',
   ready: '生成準備',
+};
+
+// 編集対象フィールドの表示名。確認メッセージや編集UIの見出しに使う。
+const editableFieldLabels: Record<EditableField, string> = {
+  destination: '目的地',
+  departure: '出発地点',
+  schedule: '日程',
+  budget: '予算',
+  purposes: '目的',
 };
 
 function nowLabel() {
@@ -227,6 +248,159 @@ function createPlanId(): string {
   return `${Date.now()}-${Math.random().toString(16).slice(2)}`;
 }
 
+// 日付を「2026/07/01」形式の文字列にする（日程ラベルやキーに使う）。
+function formatYmd(date: Date): string {
+  const year = date.getFullYear();
+  const month = `${date.getMonth() + 1}`.padStart(2, '0');
+  const day = `${date.getDate()}`.padStart(2, '0');
+  return `${year}/${month}/${day}`;
+}
+
+// 当日0時に丸めて、時刻成分を無視した日付同士の比較をできるようにする。
+function startOfDay(date: Date): Date {
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate());
+}
+
+function isSameDay(a: Date, b: Date): boolean {
+  return (
+    a.getFullYear() === b.getFullYear() &&
+    a.getMonth() === b.getMonth() &&
+    a.getDate() === b.getDate()
+  );
+}
+
+// 選択した開始日・終了日から、条件に渡す日程ラベル
+// （例: 2026/07/01〜2026/07/03（3日間） / 日帰り）を組み立てる。
+function formatScheduleLabel(start: Date, end: Date): string {
+  const nights = Math.round((startOfDay(end).getTime() - startOfDay(start).getTime()) / 86_400_000);
+  const days = nights + 1;
+  if (days <= 1) return `${formatYmd(start)}（日帰り）`;
+  return `${formatYmd(start)}〜${formatYmd(end)}（${days}日間 / ${nights}泊${days}日）`;
+}
+
+const WEEKDAY_LABELS = ['日', '月', '火', '水', '木', '金', '土'];
+
+// 日程入力用のカレンダー（範囲選択）。1回目のクリックで開始日、2回目で終了日を決める。
+// 過去日は選べないようにし、「決定」を押すと日程ラベルを親へ渡す。外部ライブラリは使わない。
+function DateRangeCalendar({ onConfirm }: { onConfirm: (label: string) => void }) {
+  const today = useMemo(() => startOfDay(new Date()), []);
+  const [viewMonth, setViewMonth] = useState<Date>(
+    () => new Date(today.getFullYear(), today.getMonth(), 1),
+  );
+  const [start, setStart] = useState<Date | null>(null);
+  const [end, setEnd] = useState<Date | null>(null);
+
+  const monthLabel = `${viewMonth.getFullYear()}年${viewMonth.getMonth() + 1}月`;
+
+  // 表示中の月のセル（先頭の曜日合わせの空白＋各日）を組み立てる。
+  const cells = useMemo<(Date | null)[]>(() => {
+    const year = viewMonth.getFullYear();
+    const month = viewMonth.getMonth();
+    const leading = new Date(year, month, 1).getDay(); // 0=日曜
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    const result: (Date | null)[] = [];
+    for (let i = 0; i < leading; i += 1) result.push(null);
+    for (let d = 1; d <= daysInMonth; d += 1) result.push(new Date(year, month, d));
+    return result;
+  }, [viewMonth]);
+
+  // 当月より前へは戻れないようにする（過去日は選べないため戻る意味がない）。
+  const canGoPrev =
+    viewMonth.getFullYear() > today.getFullYear() ||
+    (viewMonth.getFullYear() === today.getFullYear() && viewMonth.getMonth() > today.getMonth());
+
+  const goPrev = () => setViewMonth(prev => new Date(prev.getFullYear(), prev.getMonth() - 1, 1));
+  const goNext = () => setViewMonth(prev => new Date(prev.getFullYear(), prev.getMonth() + 1, 1));
+
+  const handlePick = (day: Date) => {
+    // 未選択、または既に範囲が確定済みなら、新しい開始日として選び直す。
+    if (!start || (start && end)) {
+      setStart(day);
+      setEnd(null);
+      return;
+    }
+    // 開始日のみ選択済み：開始より前を押したら開始を入れ替え、後ろなら終了日にする。
+    if (day.getTime() < start.getTime()) {
+      setStart(day);
+    } else {
+      setEnd(day);
+    }
+  };
+
+  const isInRange = (day: Date) =>
+    Boolean(start && end && day.getTime() > start.getTime() && day.getTime() < end.getTime());
+
+  const handleConfirm = () => {
+    if (!start) return;
+    onConfirm(formatScheduleLabel(start, end ?? start));
+  };
+
+  const selectionLabel = start
+    ? end
+      ? formatScheduleLabel(start, end)
+      : `${formatYmd(start)} 〜（終了日を選んでください）`
+    : '開始日をタップしてください';
+
+  return (
+    <div className="calendar">
+      <div className="calendar-header">
+        <button
+          type="button"
+          className="calendar-nav"
+          onClick={goPrev}
+          disabled={!canGoPrev}
+          aria-label="前の月"
+        >
+          ‹
+        </button>
+        <strong>{monthLabel}</strong>
+        <button type="button" className="calendar-nav" onClick={goNext} aria-label="次の月">
+          ›
+        </button>
+      </div>
+      <div className="calendar-grid calendar-weekdays" aria-hidden="true">
+        {WEEKDAY_LABELS.map(label => (
+          <span key={label} className="calendar-weekday">
+            {label}
+          </span>
+        ))}
+      </div>
+      <div className="calendar-grid">
+        {cells.map((day, index) => {
+          if (!day) return <span key={`empty-${index}`} className="calendar-day calendar-day--empty" />;
+          const disabled = day.getTime() < today.getTime();
+          const isStart = Boolean(start && isSameDay(day, start));
+          const isEnd = Boolean(end && isSameDay(day, end));
+          const within = isInRange(day);
+          const className = [
+            'calendar-day',
+            disabled ? 'calendar-day--disabled' : '',
+            isStart || isEnd ? 'calendar-day--selected' : '',
+            within ? 'calendar-day--in-range' : '',
+          ]
+            .filter(Boolean)
+            .join(' ');
+          return (
+            <button
+              key={formatYmd(day)}
+              type="button"
+              className={className}
+              disabled={disabled}
+              onClick={() => handlePick(day)}
+            >
+              {day.getDate()}
+            </button>
+          );
+        })}
+      </div>
+      <p className="calendar-hint">{selectionLabel}</p>
+      <button type="button" className="calendar-confirm" disabled={!start} onClick={handleConfirm}>
+        この日程で決定
+      </button>
+    </div>
+  );
+}
+
 export default function App() {
   const [conditions, setConditions] = useState<TravelConditionInput>(initialConditions);
   const [intakeStep, setIntakeStep] = useState<IntakeStep>('destination');
@@ -248,6 +422,8 @@ export default function App() {
   // 保存済みプランは初回レンダー時にlocalStorageから一度だけ読み込む（遅延初期化）。
   const [savedPlans, setSavedPlans] = useState<SavedPlan[]>(() => loadSavedPlans());
   const [isSavedOpen, setIsSavedOpen] = useState(false);
+  // 入力ミスを直すために、いま編集中の条件フィールド（nullなら編集していない）。
+  const [editingField, setEditingField] = useState<EditableField | null>(null);
 
   // savedPlansが変わるたびにlocalStorageへ同期する。
   // stateを唯一の正としておけば、保存/削除のたびに個別に書き込む必要がなく整合性が崩れない。
@@ -273,6 +449,18 @@ export default function App() {
     setConditions(prev => ({ ...prev, [key]: value }));
   };
 
+  // カレンダーで選んだ日程を確定する。チャットで日程を文字入力したときと同じ流れ
+  // （ユーザー発言として記録 → 条件へ反映 → 次の予算ステップへ進む）をたどる。
+  const handleSelectSchedule = (label: string) => {
+    updateCondition('schedule', label);
+    setErrorMessage('');
+    if (intakeStep === 'schedule') {
+      appendMessage('user', label);
+      setIntakeStep('budget');
+      appendMessage('ai', intakePrompts.budget);
+    }
+  };
+
   const togglePurpose = (label: string) => {
     setConditions(prev => ({
       ...prev,
@@ -292,6 +480,53 @@ export default function App() {
       ...prev,
       { id: Date.now() + prev.length, role, content, time: nowLabel() },
     ]);
+  };
+
+  // 入力済みの条件を編集モードにする。intakeStepは進めず、その項目だけを直せるようにする。
+  const startEditField = (field: EditableField) => {
+    setEditingField(field);
+    setErrorMessage('');
+  };
+
+  const cancelEditField = () => setEditingField(null);
+
+  // 目的地・出発地点・予算（自由入力の項目）の編集を確定する。
+  // intakeStepを動かさないので、後続のステップで入力済みの内容は消えない。
+  const saveTextField = (field: 'destination' | 'departure' | 'budget', value: string) => {
+    const trimmed = value.trim();
+    if (!trimmed) {
+      setErrorMessage(`${editableFieldLabels[field]}を入力してください。`);
+      return;
+    }
+    updateCondition(field, trimmed);
+    setEditingField(null);
+    setErrorMessage('');
+    appendMessage('ai', `${editableFieldLabels[field]}を「${trimmed}」に変更しました。`);
+  };
+
+  // カレンダーで日程を選び直したときの確定処理。
+  const saveScheduleField = (label: string) => {
+    updateCondition('schedule', label);
+    setEditingField(null);
+    setErrorMessage('');
+    appendMessage('ai', `日程を「${label}」に変更しました。`);
+  };
+
+  // 編集モード中の目的トグル。intakeStepは動かさず、複数選び直せるよう編集モードも維持する。
+  const editTogglePurpose = (label: string) => {
+    setConditions(prev => ({
+      ...prev,
+      purposes: prev.purposes.includes(label)
+        ? prev.purposes.filter(item => item !== label)
+        : [...prev.purposes, label],
+    }));
+    setErrorMessage('');
+  };
+
+  // 目的の選び直しを終える。
+  const finishPurposeEdit = () => {
+    setEditingField(null);
+    appendMessage('ai', `目的を「${conditions.purposes.join('、') || '未選択'}」に変更しました。`);
   };
 
   // 現在表示中のプランを保存する。プラン未生成・本文が空のときは何もしない。
@@ -320,6 +555,7 @@ export default function App() {
     setActivePlanTab('schedule');
     setMobileTab('plan');
     setErrorMessage('');
+    setEditingField(null);
     setIsSavedOpen(false);
     appendMessage('ai', `保存した「${plan.title}」を読み込みました。`);
   };
@@ -344,6 +580,7 @@ export default function App() {
     setActivePlanTab('schedule');
     setMobileTab('chat');
     setErrorMessage('');
+    setEditingField(null);
     setIsGenerating(false);
   };
 
@@ -447,10 +684,18 @@ export default function App() {
               errorMessage={errorMessage}
               input={input}
               planGenerated={planGenerated}
+              editingField={editingField}
               onInputChange={setInput}
               onTogglePurpose={togglePurpose}
+              onSelectSchedule={handleSelectSchedule}
               onSend={handleSend}
               onGeneratePlan={() => generatePlan()}
+              onStartEdit={startEditField}
+              onCancelEdit={cancelEditField}
+              onSaveText={saveTextField}
+              onSaveSchedule={saveScheduleField}
+              onEditTogglePurpose={editTogglePurpose}
+              onFinishPurposeEdit={finishPurposeEdit}
             />
           </section>
           <section className={`plan-column mobile-panel ${mobileTab === 'plan' ? 'mobile-panel--active' : ''}`}>
@@ -689,10 +934,18 @@ function ChatPanel({
   errorMessage,
   input,
   planGenerated,
+  editingField,
   onInputChange,
   onTogglePurpose,
+  onSelectSchedule,
   onSend,
   onGeneratePlan,
+  onStartEdit,
+  onCancelEdit,
+  onSaveText,
+  onSaveSchedule,
+  onEditTogglePurpose,
+  onFinishPurposeEdit,
 }: {
   messages: Message[];
   conditions: TravelConditionInput;
@@ -702,10 +955,18 @@ function ChatPanel({
   errorMessage: string;
   input: string;
   planGenerated: boolean;
+  editingField: EditableField | null;
   onInputChange: (value: string) => void;
   onTogglePurpose: (label: string) => void;
+  onSelectSchedule: (label: string) => void;
   onSend: () => void;
   onGeneratePlan: () => void;
+  onStartEdit: (field: EditableField) => void;
+  onCancelEdit: () => void;
+  onSaveText: (field: 'destination' | 'departure' | 'budget', value: string) => void;
+  onSaveSchedule: (label: string) => void;
+  onEditTogglePurpose: (label: string) => void;
+  onFinishPurposeEdit: () => void;
 }) {
   return (
     <div className="chat-panel">
@@ -726,8 +987,16 @@ function ChatPanel({
           canGenerate={canGenerate}
           isGenerating={isGenerating}
           errorMessage={errorMessage}
+          editingField={editingField}
           onTogglePurpose={onTogglePurpose}
+          onSelectSchedule={onSelectSchedule}
           onGeneratePlan={onGeneratePlan}
+          onStartEdit={onStartEdit}
+          onCancelEdit={onCancelEdit}
+          onSaveText={onSaveText}
+          onSaveSchedule={onSaveSchedule}
+          onEditTogglePurpose={onEditTogglePurpose}
+          onFinishPurposeEdit={onFinishPurposeEdit}
         />
         {isGenerating && (
           <div className="message-row message-row--ai">
@@ -756,16 +1025,32 @@ function ConditionForm({
   canGenerate,
   isGenerating,
   errorMessage,
+  editingField,
   onTogglePurpose,
+  onSelectSchedule,
   onGeneratePlan,
+  onStartEdit,
+  onCancelEdit,
+  onSaveText,
+  onSaveSchedule,
+  onEditTogglePurpose,
+  onFinishPurposeEdit,
 }: {
   conditions: TravelConditionInput;
   intakeStep: IntakeStep;
   canGenerate: boolean;
   isGenerating: boolean;
   errorMessage: string;
+  editingField: EditableField | null;
   onTogglePurpose: (label: string) => void;
+  onSelectSchedule: (label: string) => void;
   onGeneratePlan: () => void;
+  onStartEdit: (field: EditableField) => void;
+  onCancelEdit: () => void;
+  onSaveText: (field: 'destination' | 'departure' | 'budget', value: string) => void;
+  onSaveSchedule: (label: string) => void;
+  onEditTogglePurpose: (label: string) => void;
+  onFinishPurposeEdit: () => void;
 }) {
   return (
     <div className="condition-card">
@@ -777,25 +1062,79 @@ function ConditionForm({
         <span className="required-note">{intakeStepLabels[intakeStep]}</span>
       </div>
       <div className="conversation-progress" aria-label="入力済みの旅行条件">
-        <ConditionSummaryItem label="目的地" value={conditions.destination} active={intakeStep === 'destination'} />
-        <ConditionSummaryItem label="出発地点" value={conditions.departure} active={intakeStep === 'departure'} />
-        <ConditionSummaryItem label="日程" value={conditions.schedule} active={intakeStep === 'schedule'} />
-        <ConditionSummaryItem label="予算" value={conditions.budget} active={intakeStep === 'budget'} />
+        <ConditionSummaryItem
+          label="目的地"
+          value={conditions.destination}
+          active={intakeStep === 'destination'}
+          field="destination"
+          editingField={editingField}
+          canEdit={!isGenerating}
+          onStartEdit={onStartEdit}
+        />
+        <ConditionSummaryItem
+          label="出発地点"
+          value={conditions.departure}
+          active={intakeStep === 'departure'}
+          field="departure"
+          editingField={editingField}
+          canEdit={!isGenerating}
+          onStartEdit={onStartEdit}
+        />
+        <ConditionSummaryItem
+          label="日程"
+          value={conditions.schedule}
+          active={intakeStep === 'schedule'}
+          field="schedule"
+          editingField={editingField}
+          canEdit={!isGenerating}
+          onStartEdit={onStartEdit}
+        />
+        <ConditionSummaryItem
+          label="予算"
+          value={conditions.budget}
+          active={intakeStep === 'budget'}
+          field="budget"
+          editingField={editingField}
+          canEdit={!isGenerating}
+          onStartEdit={onStartEdit}
+        />
         <ConditionSummaryItem
           label="目的"
           value={conditions.purposes.join('、')}
           active={intakeStep === 'purpose' || intakeStep === 'ready'}
+          field="purposes"
+          editingField={editingField}
+          canEdit={!isGenerating}
+          onStartEdit={onStartEdit}
         />
       </div>
-      {(intakeStep === 'purpose' || intakeStep === 'ready' || conditions.purposes.length > 0) && (
-        <div className="purpose-field">
-          <span>目的</span>
-          <QuickReplyChips
-            selectedChips={conditions.purposes}
-            onToggleChip={onTogglePurpose}
-          />
+      {editingField && (
+        <ConditionEditor
+          editingField={editingField}
+          conditions={conditions}
+          onCancelEdit={onCancelEdit}
+          onSaveText={onSaveText}
+          onSaveSchedule={onSaveSchedule}
+          onEditTogglePurpose={onEditTogglePurpose}
+          onFinishPurposeEdit={onFinishPurposeEdit}
+        />
+      )}
+      {intakeStep === 'schedule' && editingField !== 'schedule' && (
+        <div className="calendar-field">
+          <span>日程をカレンダーから選択</span>
+          <DateRangeCalendar onConfirm={onSelectSchedule} />
         </div>
       )}
+      {editingField !== 'purposes' &&
+        (intakeStep === 'purpose' || intakeStep === 'ready' || conditions.purposes.length > 0) && (
+          <div className="purpose-field">
+            <span>目的</span>
+            <QuickReplyChips
+              selectedChips={conditions.purposes}
+              onToggleChip={onTogglePurpose}
+            />
+          </div>
+        )}
       {errorMessage && <p className="form-error">{errorMessage}</p>}
       {(intakeStep === 'purpose' || intakeStep === 'ready' || conditions.purposes.length > 0) && (
         <button
@@ -816,15 +1155,130 @@ function ConditionSummaryItem({
   label,
   value,
   active,
+  field,
+  editingField,
+  canEdit,
+  onStartEdit,
 }: {
   label: string;
   value: string;
   active: boolean;
+  field: EditableField;
+  editingField: EditableField | null;
+  canEdit: boolean;
+  onStartEdit: (field: EditableField) => void;
+}) {
+  // 値が入っていて、生成中でなく、別項目を編集中でもないときだけ「編集」を出す。
+  const showEdit = canEdit && Boolean(value) && editingField !== field;
+  const isEditing = editingField === field;
+  return (
+    <div
+      className={`condition-summary-item ${active ? 'condition-summary-item--active' : ''} ${
+        isEditing ? 'condition-summary-item--editing' : ''
+      }`}
+    >
+      <div className="condition-summary-item__head">
+        <span>{label}</span>
+        {showEdit && (
+          <button
+            type="button"
+            className="condition-edit-button"
+            onClick={() => onStartEdit(field)}
+            aria-label={`${label}を編集`}
+          >
+            ✎ 編集
+          </button>
+        )}
+      </div>
+      <strong>{value || '未入力'}</strong>
+    </div>
+  );
+}
+
+// 入力ミスを直すための編集パネル。自由入力（目的地・出発地点・予算）はテキスト欄、
+// 日程はカレンダー、目的はチップで選び直せるようにする。intakeStepには触れない。
+function ConditionEditor({
+  editingField,
+  conditions,
+  onCancelEdit,
+  onSaveText,
+  onSaveSchedule,
+  onEditTogglePurpose,
+  onFinishPurposeEdit,
+}: {
+  editingField: EditableField;
+  conditions: TravelConditionInput;
+  onCancelEdit: () => void;
+  onSaveText: (field: 'destination' | 'departure' | 'budget', value: string) => void;
+  onSaveSchedule: (label: string) => void;
+  onEditTogglePurpose: (label: string) => void;
+  onFinishPurposeEdit: () => void;
 }) {
   return (
-    <div className={`condition-summary-item ${active ? 'condition-summary-item--active' : ''}`}>
-      <span>{label}</span>
-      <strong>{value || '未入力'}</strong>
+    <div className="condition-editor">
+      <div className="condition-editor__head">
+        <strong>{editableFieldLabels[editingField]}を修正</strong>
+        <button type="button" className="condition-editor__cancel" onClick={onCancelEdit}>
+          キャンセル
+        </button>
+      </div>
+      {(editingField === 'destination' ||
+        editingField === 'departure' ||
+        editingField === 'budget') && (
+        <TextConditionEditor
+          key={editingField}
+          label={editableFieldLabels[editingField]}
+          initialValue={conditions[editingField]}
+          onSave={value => onSaveText(editingField, value)}
+          onCancel={onCancelEdit}
+        />
+      )}
+      {editingField === 'schedule' && (
+        <div className="calendar-field">
+          <DateRangeCalendar onConfirm={onSaveSchedule} />
+        </div>
+      )}
+      {editingField === 'purposes' && (
+        <div className="purpose-field">
+          <QuickReplyChips selectedChips={conditions.purposes} onToggleChip={onEditTogglePurpose} />
+          <button type="button" className="condition-editor__done" onClick={onFinishPurposeEdit}>
+            この目的で確定
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// 自由入力フィールド用のテキスト編集欄。現在値を初期表示し、Enterまたは「変更を保存」で確定する。
+function TextConditionEditor({
+  label,
+  initialValue,
+  onSave,
+  onCancel,
+}: {
+  label: string;
+  initialValue: string;
+  onSave: (value: string) => void;
+  onCancel: () => void;
+}) {
+  const [draft, setDraft] = useState(initialValue);
+  return (
+    <div className="text-condition-editor">
+      <input
+        autoFocus
+        value={draft}
+        onChange={event => setDraft(event.target.value)}
+        onKeyDown={event => {
+          if (event.key === 'Enter') onSave(draft);
+          if (event.key === 'Escape') onCancel();
+        }}
+        placeholder={`${label}を入力してください`}
+        aria-label={`${label}の入力`}
+      />
+      <button type="button" className="condition-editor__save" onClick={() => onSave(draft)}>
+        変更を保存
+      </button>
     </div>
   );
 }
@@ -850,22 +1304,89 @@ function QuickReplyChips({
   selectedChips: string[];
   onToggleChip: (label: string) => void;
 }) {
+  // 自由入力された目的（定義済みラベル以外の値）。確定済みなら「その他」を選択状態にする。
+  const customPurpose = getCustomPurpose(selectedChips);
+  // 「その他」入力欄を開いているか。確定前でも入力欄を表示し続けるために持つ。
+  const [otherOpen, setOtherOpen] = useState(false);
+  const [otherDraft, setOtherDraft] = useState('');
+
+  // 確定済みのカスタム目的（保存プランの復元など外部要因で変わった場合）を入力欄へ反映する。
+  // 値が空のときはユーザー入力中なので触らない。
+  useEffect(() => {
+    if (customPurpose) setOtherDraft(customPurpose);
+  }, [customPurpose]);
+
+  const showOtherInput = otherOpen || Boolean(customPurpose);
+
+  // 「その他」チップのクリック。確定済みなら選択解除（目的から削除）、未確定なら入力欄の開閉。
+  const handleOtherChipClick = () => {
+    if (customPurpose) {
+      onToggleChip(customPurpose);
+      setOtherOpen(false);
+      setOtherDraft('');
+      return;
+    }
+    setOtherOpen(prev => !prev);
+  };
+
+  // 自由入力を確定する。既存のカスタム目的があれば置き換える（既存を外し、新しい値を足す）。
+  const commitOther = () => {
+    const trimmed = otherDraft.trim();
+    if (!trimmed || trimmed === customPurpose) return;
+    if (customPurpose) onToggleChip(customPurpose);
+    onToggleChip(trimmed);
+  };
+
   return (
-    <div className="reply-chips">
-      {purposeOptions.map(option => {
-        const selected = selectedChips.includes(option.label);
-        return (
+    <div className="reply-chips-wrap">
+      <div className="reply-chips">
+        {purposeOptions.map(option => {
+          const selected = selectedChips.includes(option.label);
+          return (
+            <button
+              key={option.label}
+              className={`reply-chip ${selected ? 'reply-chip--selected' : ''}`}
+              type="button"
+              onClick={() => onToggleChip(option.label)}
+            >
+              <span>{option.icon}</span>
+              {option.label}
+            </button>
+          );
+        })}
+        <button
+          key="__other__"
+          className={`reply-chip ${showOtherInput ? 'reply-chip--selected' : ''}`}
+          type="button"
+          onClick={handleOtherChipClick}
+        >
+          <span>✏️</span>
+          その他
+        </button>
+      </div>
+      {showOtherInput && (
+        <div className="other-purpose-input">
+          <input
+            autoFocus
+            value={otherDraft}
+            onChange={event => setOtherDraft(event.target.value)}
+            onKeyDown={event => {
+              if (event.key === 'Enter') commitOther();
+              if (event.key === 'Escape' && !customPurpose) setOtherOpen(false);
+            }}
+            placeholder="その他の目的を入力してください"
+            aria-label="その他の目的の入力"
+          />
           <button
-            key={option.label}
-            className={`reply-chip ${selected ? 'reply-chip--selected' : ''}`}
             type="button"
-            onClick={() => onToggleChip(option.label)}
+            className="other-purpose-add"
+            onClick={commitOther}
+            disabled={!otherDraft.trim() || otherDraft.trim() === customPurpose}
           >
-            <span>{option.icon}</span>
-            {option.label}
+            {customPurpose ? '更新' : '追加'}
           </button>
-        );
-      })}
+        </div>
+      )}
     </div>
   );
 }
