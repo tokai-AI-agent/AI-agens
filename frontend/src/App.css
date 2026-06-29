@@ -434,6 +434,14 @@ button {
   font-weight: 800;
 }
 
+/* 目的が任意であることを伝える補助テキスト */
+.purpose-hint {
+  margin: 0;
+  color: #94a3b8;
+  font-size: 12px;
+  font-weight: 600;
+}
+
 .condition-grid input {
   width: 100%;
   min-height: 42px;

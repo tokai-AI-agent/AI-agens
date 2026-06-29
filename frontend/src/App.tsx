@@ -79,6 +79,12 @@ function getCustomPurpose(purposes: string[]): string {
   return purposes.find(purpose => !predefinedPurposeLabels.includes(purpose)) ?? '';
 }
 
+// 目的は任意入力なので、未選択でも空文字にならないよう表示・プロンプト用の文言を整える。
+// 何も選ばれていなければ「おまかせ」として扱い、定番中心のプランをAIに任せられるようにする。
+function formatPurposes(purposes: string[]): string {
+  return purposes.length > 0 ? purposes.join('、') : 'おまかせ（特に希望なし）';
+}
+
 const initialConditions: TravelConditionInput = {
   destination: '',
   departure: '',
@@ -93,7 +99,7 @@ const intakePrompts: Record<IntakeStep, string> = {
   departure: 'ありがとうございます！次に、どこから出発しますか？出発地点を教えてください！',
   schedule: 'いいですね！次に日程を教えてください！',
   budget: 'では次は予算を教えてください！',
-  purpose: '旅行の目的は何ですか？下の選択肢から選んでください。',
+  purpose: '旅行の目的は何ですか？下の選択肢から選んでください。特にこだわりがなければ、選ばずにそのままプランを作成することもできます（おまかせ）。',
   ready: '条件がそろいました！内容を確認して、プラン生成ボタンを押してください。',
 };
 
@@ -131,7 +137,8 @@ function buildPlanPrompt(conditions: TravelConditionInput, extraRequest?: string
 - 日程: ${conditions.schedule}
 - 予算: ${conditions.budget}
 - 人数: ${conditions.people}
-- 目的: ${conditions.purposes.join('、')}
+- 目的: ${formatPurposes(conditions.purposes)}
+${conditions.purposes.length === 0 ? '  ※目的の指定がないため、観光・グルメ・自然・名所などをバランスよく取り入れた王道のおすすめプランにしてください。' : ''}
 ${extraRequest ? `- 追加要望: ${extraRequest}` : ''}
 
 ## 作成してほしい内容
@@ -191,7 +198,7 @@ function summarizeConditions(conditions: TravelConditionInput) {
     `日程: ${conditions.schedule}`,
     `予算: ${conditions.budget}`,
     `人数: ${conditions.people}`,
-    `目的: ${conditions.purposes.join('、')}`,
+    `目的: ${formatPurposes(conditions.purposes)}`,
   ].join('\n');
 }
 
@@ -434,13 +441,13 @@ export default function App() {
     persistSavedPlans(savedPlans);
   }, [savedPlans]);
 
+  // 目的（purposes）は任意。目的地・出発地点・日程・予算がそろえば、目的未選択でも生成できる。
   const canGenerate = useMemo(
     () =>
       conditions.destination.trim() &&
       conditions.departure.trim() &&
       conditions.schedule.trim() &&
       conditions.budget.trim() &&
-      conditions.purposes.length > 0 &&
       !isGenerating,
     [conditions, isGenerating],
   );
@@ -589,7 +596,7 @@ export default function App() {
 
   const generatePlan = async (extraRequest?: string) => {
     if (!canGenerate) {
-      setErrorMessage('目的地、出発地点、日程、予算、目的をすべて入力してください。');
+      setErrorMessage('目的地、出発地点、日程、予算をすべて入力してください。');
       return;
     }
 
@@ -1131,11 +1138,12 @@ function ConditionForm({
       {editingField !== 'purposes' &&
         (intakeStep === 'purpose' || intakeStep === 'ready' || conditions.purposes.length > 0) && (
           <div className="purpose-field">
-            <span>目的</span>
+            <span>目的（任意）</span>
             <QuickReplyChips
               selectedChips={conditions.purposes}
               onToggleChip={onTogglePurpose}
             />
+            <p className="purpose-hint">目的は選ばなくてもプランを作成できます（おまかせ）。</p>
           </div>
         )}
       {errorMessage && <p className="form-error">{errorMessage}</p>}
@@ -1147,7 +1155,12 @@ function ConditionForm({
           onClick={onGeneratePlan}
         >
           <span>{isGenerating ? '⌛' : '✨'}</span>
-          {isGenerating ? 'AIがプラン作成中...' : 'AIエージェントでプランを作成'}
+          {/* 目的が未選択なら「おまかせ」で作る点を文言でも伝える */}
+          {isGenerating
+            ? 'AIがプラン作成中...'
+            : conditions.purposes.length > 0
+              ? 'AIエージェントでプランを作成'
+              : 'おまかせでプランを作成'}
         </button>
       )}
     </div>
@@ -1935,7 +1948,7 @@ function PlanSummaryCards({ conditions }: { conditions: TravelConditionInput }) 
       <div className="summary-card">
         <span>🎯</span>
         <strong>目的</strong>
-        <p>{conditions.purposes.join('、')}</p>
+        <p>{formatPurposes(conditions.purposes)}</p>
       </div>
       <div className="summary-card">
         <span>💡</span>
