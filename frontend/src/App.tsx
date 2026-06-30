@@ -1675,6 +1675,7 @@ function PlanSummaryCards({ language, conditions }: { language: Language; condit
 type LatLng = { lat: number; lng: number };
 type PlanSpot = { name: string; time: string; address?: string };
 type GeoSpot = PlanSpot & LatLng;
+type GeocodeAttempt = { query: string; reason: string };
 
 function sleep(ms: number) {
   return new Promise<void>(resolve => setTimeout(resolve, ms));
@@ -1693,14 +1694,89 @@ const geocodeCache = new Map<string, Promise<LatLng | null>>();
 let geocodeQueue: Promise<unknown> = Promise.resolve();
 const GEOCODE_MIN_GAP_MS = 1100;
 
+function normalizeGeocodeQuery(value: string): string {
+  return value
+    .normalize('NFKC')
+    .replace(/[‐‑‒–—―ーｰ－]/g, '-')
+    .replace(/\s+/g, ' ')
+    .replace(/\s*([都道府県市区町村郡])\s*/g, '$1')
+    .replace(/\s*-\s*/g, '-')
+    .trim();
+}
+
+function compactAddressForGeocoding(address: string): string {
+  return normalizeGeocodeQuery(address)
+    .replace(/丁目/g, '-')
+    .replace(/番地?/g, '-')
+    .replace(/号/g, '')
+    .replace(/-{2,}/g, '-')
+    .replace(/-$/g, '')
+    .trim();
+}
+
+function getJapaneseAddressArea(address: string): string | null {
+  const normalized = normalizeGeocodeQuery(address);
+  const match = normalized.match(/^(.+?[都道府県])(.+?郡.+?[町村]|.+?市.+?区|.+?[市区町村])/);
+  if (!match) return null;
+
+  return `${match[1]}${match[2]}`;
+}
+
+function uniqueGeocodeAttempts(attempts: GeocodeAttempt[]): GeocodeAttempt[] {
+  const seen = new Set<string>();
+
+  return attempts
+    .map(attempt => ({
+      ...attempt,
+      query: normalizeGeocodeQuery(attempt.query),
+    }))
+    .filter(attempt => {
+      if (!attempt.query || seen.has(attempt.query)) return false;
+      seen.add(attempt.query);
+      return true;
+    });
+}
+
+function buildSpotGeocodeAttempts(spot: PlanSpot, destination: string): GeocodeAttempt[] {
+  const attempts: GeocodeAttempt[] = [];
+  const cleanDestination = normalizeGeocodeQuery(destination);
+  const cleanName = normalizeGeocodeQuery(spot.name);
+
+  if (spot.address) {
+    const exactAddress = normalizeGeocodeQuery(spot.address);
+    const compactAddress = compactAddressForGeocoding(spot.address);
+    const addressArea = getJapaneseAddressArea(spot.address);
+
+    attempts.push({ query: exactAddress, reason: 'address' });
+
+    if (compactAddress !== exactAddress) {
+      attempts.push({ query: compactAddress, reason: 'normalized address' });
+    }
+
+    attempts.push({ query: `${cleanName} ${exactAddress}`, reason: 'name + address' });
+
+    if (addressArea) {
+      attempts.push({ query: `${cleanName} ${addressArea}`, reason: 'name + address area' });
+    }
+  }
+
+  attempts.push({ query: cleanName, reason: 'name' });
+
+  if (cleanDestination && !cleanName.includes(cleanDestination)) {
+    attempts.push({ query: `${cleanName} ${cleanDestination}`, reason: 'name + destination' });
+  }
+
+  return uniqueGeocodeAttempts(attempts);
+}
+
 // OpenStreetMapのNominatimで地名を座標へ変換する（無料・APIキー不要）。
 // 取得できなければnull。利用ポリシー順守のためネットワークリクエストは直列＋1.1秒間隔。
 function geocodePlace(query: string): Promise<LatLng | null> {
-  const key = query.trim();
+  const key = normalizeGeocodeQuery(query);
   if (!key) return Promise.resolve(null);
 
   const cached = geocodeCache.get(key);
-  if (cached) return cached; // キャッシュ済みはネットワークを使わないので待たない
+  if (cached) return cached;
 
   const lookup = (async () => {
     // 直前のリクエスト完了を待ち、さらに間隔を空けてから実行する（直列＋レート制限）
@@ -1712,22 +1788,36 @@ function geocodePlace(query: string): Promise<LatLng | null> {
     try {
       await previous;
       await sleep(GEOCODE_MIN_GAP_MS);
-      // AIが英語・ドイツ語などに翻訳したアドレスはOSMの住所表記と一致しにくいため、
-      // 国名を補ってヒット率を上げる（既に「Japan」「日本」を含む場合は付けない）。
-      const hasCountry = /japan|日本/i.test(key);
-      const searchQuery = hasCountry ? key : `${key}, Japan`;
-      const url =
-        `https://nominatim.openstreetmap.org/search?format=json&limit=1` +
-        `&accept-language=ja&q=${encodeURIComponent(searchQuery)}`;
+
+      const params = new URLSearchParams({
+        format: 'jsonv2',
+        limit: '10',
+        countrycodes: 'jp',
+        'accept-language': 'ja,en',
+        addressdetails: '1',
+        namedetails: '1',
+        dedupe: '1',
+        q: key,
+      });
+      const url = `https://nominatim.openstreetmap.org/search?${params.toString()}`;
+
       // ブラウザではUser-Agentを設定できないため、言語ヒントのみ付与する
       const res = await fetch(url, { headers: { 'Accept-Language': 'ja' } });
       if (!res.ok) return null;
+
       const data = await res.json();
       if (!Array.isArray(data) || data.length === 0) return null;
-      const lat = Number(data[0]?.lat);
-      const lng = Number(data[0]?.lon);
-      if (Number.isNaN(lat) || Number.isNaN(lng)) return null;
-      return { lat, lng };
+
+      for (const item of data) {
+        const lat = Number(item?.lat);
+        const lng = Number(item?.lon);
+
+        if (Number.isFinite(lat) && Number.isFinite(lng) && isWithinJapan({ lat, lng })) {
+          return { lat, lng };
+        }
+      }
+
+      return null;
     } catch {
       return null;
     } finally {
@@ -1746,38 +1836,68 @@ function extractPlanSpots(planText: string): PlanSpot[] {
   const lines = planText
     .replace(/^```markdown\s*/i, '')
     .replace(/```$/i, '')
-    .split('\n');
+    .split('\n')
+    .map(line => line.trim())
+    .filter(Boolean);
 
   const spots: PlanSpot[] = [];
   const seen = new Set<string>();
-  for (const raw of lines) {
-    const trimmed = raw.trim();
-    if (!/^-\s*\d{1,2}:\d{2}\s*-/.test(trimmed)) continue;
 
-    const normalized = trimmed.replace(/^-\s*/, '');
-    const match = normalized.match(/^(\d{1,2}:\d{2})\s*-\s*(.+)$/);
-    if (!match) continue;
-
-    const time = match[1];
-    // 画像URL部分を取り除いてから「スポット名：コメント / ...」の先頭タイトルを取り出す
-    const detail = match[2].replace(new RegExp(`\\s\\/\\s*(?:${IMAGE_LABEL_PATTERN})[:：]\\s*\\S+`, 'g'), '');
-    const titlePart = detail.split(/\s*\/\s*/)[0];
-    const rawTitle = titlePart.split(/[:：]/)[0].trim();
-    if (!rawTitle || isNonSpotLine(rawTitle)) continue; // 移動・出発・到着などはスキップ
+  const addSpot = (nameRaw: string, time: string, addressRaw?: string) => {
+    const rawTitle = nameRaw.split(/[:：]/)[0].trim();
+    if (!rawTitle || isNonSpotLine(rawTitle)) return;
 
     const name = cleanSpotTitle(rawTitle);
-    if (name.length < 2 || seen.has(name)) continue;
-    seen.add(name);
+    if (name.length < 2 || seen.has(`${time}-${name}`)) return;
 
-    // 「/ 住所：◯◯」フィールドを抽出（/区切りの1フィールドなので次の/手前まで）。
     // 「不明」系（不明、未知、Unknown、Unbekannt、알 수 없음）は推測住所ではないので住所として扱わず、名前フォールバックに回す。
-    const addressMatch = match[2].match(new RegExp(`(?:${ADDRESS_LABEL_PATTERN})[:：]\\s*([^/]+)`));
-    const addressRaw = addressMatch?.[1]?.trim();
     const isUnknownAddress = !!addressRaw && /^(不明|未知|Unknown|Unbekannt|알 수 없음)$/i.test(addressRaw);
-    const address = addressRaw && !isUnknownAddress ? addressRaw : undefined;
+    const address =
+      addressRaw && !isUnknownAddress && !addressRaw.includes('宿所在地')
+        ? addressRaw.trim()
+        : undefined;
 
+    seen.add(`${time}-${name}`);
     spots.push({ name, time, address });
+  };
+
+  for (let i = 0; i < lines.length; i++) {
+    const trimmed = lines[i];
+
+    // 既存形式：- 09:00 - スポット名 / 住所：...
+    const oneLineMatch = trimmed.match(/^-?\s*(\d{1,2}:\d{2})\s*-\s*(.+)$/);
+    if (oneLineMatch) {
+      const time = oneLineMatch[1];
+      const detail = oneLineMatch[2].replace(new RegExp(`\\s\\/\\s*(?:${IMAGE_LABEL_PATTERN})[:：]\\s*\\S+`, 'g'), '');
+      const titlePart = detail.split(/\s*\/\s*/)[0];
+      const addressMatch = detail.match(new RegExp(`(?:${ADDRESS_LABEL_PATTERN})[:：]\\s*([^/]+)`));
+      addSpot(titlePart, time, addressMatch?.[1]?.trim());
+      continue;
+    }
+
+    // 翻訳やモデル出力の揺れで「時刻」「スポット名」「住所」が別行になる形式にも対応する。
+    const timeOnlyMatch = trimmed.match(/^(\d{1,2}:\d{2})$/);
+    if (timeOnlyMatch) {
+      const time = timeOnlyMatch[1];
+      const nameLine = lines[i + 1];
+      if (!nameLine) continue;
+
+      let address: string | undefined;
+
+      for (let j = i + 2; j < Math.min(i + 8, lines.length); j++) {
+        const addressMatch = lines[j].match(new RegExp(`^(?:${ADDRESS_LABEL_PATTERN})[:：]\\s*(.+)$`));
+        if (addressMatch) {
+          address = addressMatch[1].trim();
+          break;
+        }
+
+        if (/^\d{1,2}:\d{2}$/.test(lines[j])) break;
+      }
+
+      addSpot(nameLine, time, address);
+    }
   }
+
   return spots;
 }
 
@@ -1785,15 +1905,32 @@ function extractPlanSpots(planText: string): PlanSpot[] {
 // react-leaflet v4には自動フィット機能がないため、useMapで地図インスタンスを取得して調整する。
 function FitBounds({ positions }: { positions: [number, number][] }) {
   const map = useMap();
+
   useEffect(() => {
     if (positions.length === 0) return;
-    if (positions.length === 1) {
-      // ピンが1個のときはfitBoundsだと過剰にズームするので、中心表示にする
-      map.setView(positions[0], 13);
-    } else {
-      map.fitBounds(positions, { padding: [40, 40] });
-    }
+
+    const updateMapView = () => {
+      map.invalidateSize();
+
+      if (positions.length === 1) {
+        map.setView(positions[0], 13);
+      } else {
+        map.fitBounds(positions, {
+          padding: [50, 50],
+          maxZoom: 14,
+        });
+      }
+    };
+
+    updateMapView();
+
+    const timer = window.setTimeout(updateMapView, 300);
+
+    return () => {
+      window.clearTimeout(timer);
+    };
   }, [map, positions]);
+
   return null;
 }
 
@@ -1830,22 +1967,24 @@ function MapPreview({
       for (const spot of spots) {
         if (cancelled) return;
 
-        // 住所はほぼ一意なので、住所があればまず住所でジオコーディングする
-        // （同名の海外地点への誤爆を防ぐのが狙い）。
         let coord: LatLng | null = null;
-        if (spot.address) {
-          coord = await geocodePlace(spot.address);
-        }
-        if (cancelled) return;
+        const attempts = buildSpotGeocodeAttempts(spot, destination);
 
-        // 住所が無い／ヒットしないときは、従来どおり「目的地＋スポット名」でフォールバック。
-        if (!coord) {
-          const fallbackQuery =
-            destination && !spot.name.includes(destination)
-              ? `${destination} ${spot.name}`
-              : spot.name;
-          coord = await geocodePlace(fallbackQuery); // 直列＋1.1秒間隔はgeocodePlace内で担保
+        // 住所単体で取れない場合も、施設名+住所、施設名+市区町村、施設名の順で試す。
+        // destinationは広域・近隣スポットでノイズになりやすいため、最後の補助クエリに留める。
+        for (const attempt of attempts) {
+          coord = await geocodePlace(attempt.query); // 直列＋1.1秒間隔はgeocodePlace内で担保
+
+          console.log("地点検索", {
+            name: spot.name,
+            address: spot.address,
+            reason: attempt.reason,
+            query: attempt.query,
+            coord,
+          });
+
           if (cancelled) return;
+          if (coord) break;
         }
 
         // 日本の範囲外に出た座標は誤爆とみなしてピンを立てない（最終防波堤）
