@@ -486,6 +486,21 @@ button {
   display: grid;
   align-content: start;
   gap: 6px;
+  text-align: left;
+  cursor: pointer;
+  appearance: none;
+  font: inherit;
+  transition: border-color 0.16s ease, box-shadow 0.16s ease, background 0.16s ease;
+}
+
+.condition-summary-item:hover {
+  border-color: #bfdbfe;
+  box-shadow: 0 8px 18px rgba(47, 128, 237, 0.07);
+}
+
+.condition-summary-item:focus-visible {
+  outline: 3px solid rgba(47, 128, 237, 0.18);
+  outline-offset: 2px;
 }
 
 .condition-summary-item--active {
@@ -506,6 +521,48 @@ button {
   font-size: 14px;
   line-height: 1.45;
   overflow-wrap: anywhere;
+}
+
+.inline-condition-editor {
+  margin-top: 14px;
+}
+
+.inline-condition-editor label,
+.date-range-editor label {
+  display: grid;
+  gap: 7px;
+}
+
+.inline-condition-editor label > span,
+.date-range-editor label > span {
+  color: #6b7280;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.inline-condition-editor input,
+.date-range-editor input {
+  width: 100%;
+  min-height: 42px;
+  padding: 0 12px;
+  border: 1px solid #dbe4ee;
+  border-radius: 8px;
+  outline: 0;
+  background: #ffffff;
+  color: #1f2937;
+  font: inherit;
+}
+
+.inline-condition-editor input:focus,
+.date-range-editor input:focus {
+  border-color: #2f80ed;
+  box-shadow: 0 0 0 3px rgba(47, 128, 237, 0.12);
+}
+
+.date-range-editor {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
 }
 
 .purpose-field {
@@ -882,12 +939,17 @@ button {
 }
 
 .plan-tabs {
+  position: sticky;
+  top: 0;
+  z-index: 8;
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 6px;
   padding: 5px;
+  margin-bottom: 14px;
   border-radius: 8px;
   background: #f2f6fb;
+  box-shadow: 0 10px 22px rgba(31, 41, 55, 0.08);
 }
 
 .plan-tab {
@@ -1261,6 +1323,103 @@ button {
   height: 100%;
 }
 
+.map-day-tabs {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 0 0 10px;
+  margin: -2px 0 10px;
+  scrollbar-width: thin;
+}
+
+.map-day-tab {
+  min-height: 34px;
+  padding: 0 12px;
+  border: 1px solid #dbe4ee;
+  border-radius: 999px;
+  background: #ffffff;
+  color: #374151;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  flex: 0 0 auto;
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.map-day-tab:hover {
+  border-color: #bfdbfe;
+  color: #1d4ed8;
+}
+
+.map-day-tab--active {
+  border-color: #2f80ed;
+  background: #eff6ff;
+  color: #1d4ed8;
+}
+
+.map-day-tab i {
+  width: 9px;
+  height: 9px;
+  border-radius: 999px;
+  display: inline-block;
+}
+
+.route-marker {
+  position: relative;
+  display: block;
+  width: 22px;
+  height: 22px;
+  border: 3px solid #ffffff;
+  border-radius: 50% 50% 50% 0;
+  background: var(--route-color);
+  box-shadow: 0 8px 18px rgba(31, 41, 55, 0.28);
+  transform: rotate(-45deg);
+}
+
+.route-marker::after {
+  content: "";
+  position: absolute;
+  inset: 5px;
+  border-radius: 999px;
+  background: #ffffff;
+}
+
+.route-marker--start::after {
+  inset: 4px;
+  border: 2px solid #ffffff;
+  background: var(--route-color);
+}
+
+.map-route-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: -6px 0 16px;
+}
+
+.map-route-legend span {
+  min-height: 28px;
+  padding: 0 10px;
+  border: 1px solid #e5e7eb;
+  border-radius: 999px;
+  background: #ffffff;
+  color: #374151;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.map-route-legend i {
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  display: inline-block;
+}
+
 /* ジオコーディング中のローディング表示 */
 .map-locating {
   height: 360px;
@@ -1560,6 +1719,10 @@ button {
 
   .message-bubble {
     padding: 12px 13px 9px;
+  }
+
+  .date-range-editor {
+    grid-template-columns: 1fr;
   }
 
   .skeleton-row {

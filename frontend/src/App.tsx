@@ -98,6 +98,39 @@ function nowLabel(language: Language) {
   }).format(new Date());
 }
 
+function dateRangeDisplay(language: Language, startDate: string, endDate: string): string {
+  if (!startDate && !endDate) return '';
+
+  const formatDate = (value: string) => {
+    const date = new Date(`${value}T00:00:00`);
+    if (Number.isNaN(date.getTime())) return value;
+
+    return new Intl.DateTimeFormat(LOCALE_MAP[language], {
+      month: 'short',
+      day: 'numeric',
+    }).format(date);
+  };
+
+  if (startDate && !endDate) return formatDate(startDate);
+  if (!startDate && endDate) return formatDate(endDate);
+
+  const start = new Date(`${startDate}T00:00:00`);
+  const end = new Date(`${endDate}T00:00:00`);
+  if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime()) || end < start) {
+    return `${formatDate(startDate)} - ${formatDate(endDate)}`;
+  }
+
+  const days = Math.round((end.getTime() - start.getTime()) / 86400000) + 1;
+  const dayLabel =
+    language === 'ja' || language === 'zh'
+      ? `${days}日間`
+      : language === 'ko'
+        ? `${days}일`
+        : `${days} ${days === 1 ? 'day' : 'days'}`;
+
+  return `${formatDate(startDate)} - ${formatDate(endDate)} / ${dayLabel}`;
+}
+
 function buildPlanPrompt(conditions: TravelConditionInput, language: Language, extraRequest?: string) {
   const people = peopleDisplay(language, conditions.people);
   const purposes = joinPurposes(language, conditions.purposes);
@@ -124,13 +157,24 @@ ${extraRequest ? `- 追加要望: ${extraRequest}` : ''}
 - 検索結果に画像URLがある場合は、各行程の行に画像URLを付ける
 
 ## 出力ルール
-- モデルプランは出発地点（${conditions.departure}）からの移動を起点に組み立ててください。1日目の最初は出発地点から行先までの移動（出発時刻・交通手段・所要時間の目安）にし、最終日の最後は行先から出発地点へ戻る移動で締めくくってください。
+- モデルプランは出発地点（${conditions.departure}）からの移動を起点に組み立ててください。1日目の最初は出発地点から行先までの移動（出発時刻・交通手段・所要時間の目安）にしてください。
 - 出発地点から行先までのアクセス（新幹線・飛行機・車・在来線など）と所要時間・料金目安を「移動・注意点」に必ず記載してください。
 - モデルプランは「- 09:00 - 行先名：一言コメント / 滞在目安：... / 移動：... / 住所：... / 画像URL：https://...」の形式で、1日あたり6〜9件書いてください。
 - 一言コメントは、その場所で何が楽しめるか、またはなぜ条件に合うかを短く書いてください。
-- 各観光地・飲食店の行には、検索結果から取得した正確な住所を「/ 住所：◯◯」の形式で必ず付けてください（地図のピンを正しい場所に立てるために使います）。例: - 09:00 - 龍安寺：石庭が有名 / 滞在目安：60分 / 移動：徒歩5分 / 住所：京都府京都市右京区龍安寺御陵ノ下町13 / 画像URL：https://...
-- 住所が検索結果で確認できない場合は「/ 住所：不明」とし、推測で住所を作らないでください。
-- 移動・出発・到着の行には住所を付けないでください。
+- 旅行先（${conditions.destination}）の都道府県・市区町村を検索結果で確認してから、候補スポットを選んでください。
+- 「祇園」「平和公園」「中央公園」など同名地名・曖昧な地名は、必ず「旅行先の都道府県・市区町村 + スポット名」で再検索し、旅行先地域の施設であることを確認してください。
+- 各観光地・飲食店・交通拠点（駅・空港・港・バスターミナルなど）の行には、検索結果から取得した正式住所を「/ 住所：都道府県市区町村以降の住所」の形式で必ず付けてください（地図のピンを正しい場所に立てるために使います）。例: - 09:00 - 龍安寺：石庭が有名 / 滞在目安：60分 / 移動：徒歩5分 / 住所：京都府京都市右京区龍安寺御陵ノ下町13 / 画像URL：https://...
+- 1日目だけでなく2日目・3日目以降を含む全日程で、交通拠点の到着・出発・帰着・乗換・集合・解散・チェックイン前後・荷物預けなどの行も、地点名を明示して毎回住所を付けてください。例: - 09:30 - 京都駅を出発 / 住所：京都府京都市下京区東塩小路釜殿町
+- 同じ駅・空港・バスターミナルが複数回登場する場合も、「前述」「同上」などで省略せず、各タイムライン行に毎回正式住所を付けてください。
+- 出力前に全日程のタイムラインを確認し、駅・空港・港・バスターミナルを含む行に住所が無い場合は、必ず住所を補ってから回答してください。
+- 住所には必ず都道府県名と市区町村名を含めてください。施設名だけ、地区名だけ、都道府県のない住所は使わないでください。
+- 住所が検索結果で確認できないスポット、または旅行先と異なる都道府県のスポットは採用しないでください。推測住所は作らず、確認できる別のスポットに差し替えてください。
+- 交通拠点名を含まない単なる移動説明行には住所を付けないでください。
+- ホテル情報を正確に取得できない場合は、宿泊地・ホテル名・駅周辺ホテルをタイムラインに追加しないでください。各日の最後に駅へ戻る行や、仮の宿泊施設は作らないでください。
+- 複数日程の場合、ホテルや宿泊地が確定していない日は、その日の最後の観光地で行程を終え、翌日の最初の観光地へ自然につなげてください。
+- ホテルへチェックインする場合、旅行終了時、または別都市への移動開始時を除き、観光途中で駅へ戻るプランは生成しないでください。
+- 駅・空港・バスターミナルは旅行開始時・旅行終了時・都市間移動時・乗換時のみ使い、同じ駅へ何度も戻るようなルートは避けてください。
+- 観光地は地理的に近い順に巡回し、駅へ戻ってから別の観光地へ向かうような無駄な往復を作らないでください。
 - 画像は検索結果に含まれる実在URLだけを使い、架空URLは作らないでください。画像だけをまとめた章は作らず、該当する観光地・行先の行に付けてください。
 - 1日目の最初の観光地には、行先を代表する有名な観光名所を選び、可能な限り画像URLを付けてください。この画像はプランのヘッダー背景にも使います。
 
@@ -287,6 +331,8 @@ export default function App() {
     },
   ]);
   const [input, setInput] = useState('');
+  const [scheduleStartDate, setScheduleStartDate] = useState('');
+  const [scheduleEndDate, setScheduleEndDate] = useState('');
   const [activePlanTab, setActivePlanTab] = useState<PlanTab>('schedule');
   const [mobileTab, setMobileTab] = useState<MobileTab>('chat');
   const [isGenerating, setIsGenerating] = useState(false);
@@ -324,6 +370,13 @@ export default function App() {
     value: TravelConditionInput[Key],
   ) => {
     setConditions(prev => ({ ...prev, [key]: value }));
+    setErrorMessage('');
+  };
+
+  const updateScheduleDates = (startDate: string, endDate: string) => {
+    setScheduleStartDate(startDate);
+    setScheduleEndDate(endDate);
+    updateCondition('schedule', dateRangeDisplay(language, startDate, endDate));
   };
 
   const togglePurpose = (id: PurposeId) => {
@@ -371,6 +424,8 @@ export default function App() {
     setPlanText(plan.planText);
     setPlanGenerated(true);
     setIntakeStep('ready');
+    setScheduleStartDate('');
+    setScheduleEndDate('');
     setActivePlanTab('schedule');
     setMobileTab('plan');
     setErrorMessage('');
@@ -401,6 +456,8 @@ export default function App() {
       },
     ]);
     setInput('');
+    setScheduleStartDate('');
+    setScheduleEndDate('');
     setActivePlanTab('schedule');
     setMobileTab('chat');
     setErrorMessage('');
@@ -546,8 +603,13 @@ export default function App() {
               isTranslating={isTranslating}
               errorMessage={errorMessage}
               input={input}
+              startDate={scheduleStartDate}
+              endDate={scheduleEndDate}
               planGenerated={planGenerated}
               onInputChange={setInput}
+              onEditStep={setIntakeStep}
+              onUpdateCondition={updateCondition}
+              onUpdateScheduleDates={updateScheduleDates}
               onTogglePurpose={togglePurpose}
               onSend={handleSend}
               onGeneratePlan={() => generatePlan()}
@@ -830,8 +892,13 @@ function ChatPanel({
   isTranslating,
   errorMessage,
   input,
+  startDate,
+  endDate,
   planGenerated,
   onInputChange,
+  onEditStep,
+  onUpdateCondition,
+  onUpdateScheduleDates,
   onTogglePurpose,
   onSend,
   onGeneratePlan,
@@ -845,8 +912,16 @@ function ChatPanel({
   isTranslating: boolean;
   errorMessage: string;
   input: string;
+  startDate: string;
+  endDate: string;
   planGenerated: boolean;
   onInputChange: (value: string) => void;
+  onEditStep: (step: IntakeStep) => void;
+  onUpdateCondition: <Key extends keyof TravelConditionInput>(
+    key: Key,
+    value: TravelConditionInput[Key],
+  ) => void;
+  onUpdateScheduleDates: (startDate: string, endDate: string) => void;
   onTogglePurpose: (id: PurposeId) => void;
   onSend: () => void;
   onGeneratePlan: () => void;
@@ -871,6 +946,11 @@ function ChatPanel({
           canGenerate={canGenerate}
           isGenerating={isGenerating || isTranslating}
           errorMessage={errorMessage}
+          startDate={startDate}
+          endDate={endDate}
+          onEditStep={onEditStep}
+          onUpdateCondition={onUpdateCondition}
+          onUpdateScheduleDates={onUpdateScheduleDates}
           onTogglePurpose={onTogglePurpose}
           onGeneratePlan={onGeneratePlan}
         />
@@ -903,6 +983,11 @@ function ConditionForm({
   canGenerate,
   isGenerating,
   errorMessage,
+  startDate,
+  endDate,
+  onEditStep,
+  onUpdateCondition,
+  onUpdateScheduleDates,
   onTogglePurpose,
   onGeneratePlan,
 }: {
@@ -912,6 +997,14 @@ function ConditionForm({
   canGenerate: boolean;
   isGenerating: boolean;
   errorMessage: string;
+  startDate: string;
+  endDate: string;
+  onEditStep: (step: IntakeStep) => void;
+  onUpdateCondition: <Key extends keyof TravelConditionInput>(
+    key: Key,
+    value: TravelConditionInput[Key],
+  ) => void;
+  onUpdateScheduleDates: (startDate: string, endDate: string) => void;
   onTogglePurpose: (id: PurposeId) => void;
   onGeneratePlan: () => void;
 }) {
@@ -923,6 +1016,13 @@ function ConditionForm({
     purpose: t(language, 'stepPurpose'),
     ready: t(language, 'stepReady'),
   };
+  const dateLabels: Record<Language, { start: string; end: string }> = {
+    ja: { start: '開始日', end: '終了日' },
+    en: { start: 'Start date', end: 'End date' },
+    de: { start: 'Startdatum', end: 'Enddatum' },
+    zh: { start: '开始日期', end: '结束日期' },
+    ko: { start: '시작일', end: '종료일' },
+  };
   return (
     <div className="condition-card">
       <div className="condition-card__header">
@@ -933,16 +1033,97 @@ function ConditionForm({
         <span className="required-note">{stepLabels[intakeStep]}</span>
       </div>
       <div className="conversation-progress" aria-label={t(language, 'conditionProgressAria')}>
-        <ConditionSummaryItem language={language} label={stepLabels.destination} value={conditions.destination} active={intakeStep === 'destination'} />
-        <ConditionSummaryItem language={language} label={stepLabels.departure} value={conditions.departure} active={intakeStep === 'departure'} />
-        <ConditionSummaryItem language={language} label={stepLabels.schedule} value={conditions.schedule} active={intakeStep === 'schedule'} />
-        <ConditionSummaryItem language={language} label={stepLabels.budget} value={conditions.budget} active={intakeStep === 'budget'} />
+        <ConditionSummaryItem
+          language={language}
+          label={stepLabels.destination}
+          value={conditions.destination}
+          active={intakeStep === 'destination'}
+          onEdit={() => onEditStep('destination')}
+        />
+        <ConditionSummaryItem
+          language={language}
+          label={stepLabels.departure}
+          value={conditions.departure}
+          active={intakeStep === 'departure'}
+          onEdit={() => onEditStep('departure')}
+        />
+        <ConditionSummaryItem
+          language={language}
+          label={stepLabels.schedule}
+          value={conditions.schedule}
+          active={intakeStep === 'schedule'}
+          onEdit={() => onEditStep('schedule')}
+        />
+        <ConditionSummaryItem
+          language={language}
+          label={stepLabels.budget}
+          value={conditions.budget}
+          active={intakeStep === 'budget'}
+          onEdit={() => onEditStep('budget')}
+        />
         <ConditionSummaryItem
           language={language}
           label={stepLabels.purpose}
           value={joinPurposes(language, conditions.purposes)}
           active={intakeStep === 'purpose' || intakeStep === 'ready'}
+          onEdit={() => onEditStep('purpose')}
         />
+      </div>
+      <div className="inline-condition-editor">
+        {intakeStep === 'destination' && (
+          <label>
+            <span>{stepLabels.destination}</span>
+            <input
+              type="text"
+              value={conditions.destination}
+              onChange={event => onUpdateCondition('destination', event.target.value)}
+              placeholder={stepLabels.destination}
+            />
+          </label>
+        )}
+        {intakeStep === 'departure' && (
+          <label>
+            <span>{stepLabels.departure}</span>
+            <input
+              type="text"
+              value={conditions.departure}
+              onChange={event => onUpdateCondition('departure', event.target.value)}
+              placeholder={stepLabels.departure}
+            />
+          </label>
+        )}
+        {intakeStep === 'schedule' && (
+          <div className="date-range-editor">
+            <label>
+              <span>{dateLabels[language].start}</span>
+              <input
+                type="date"
+                value={startDate}
+                onChange={event => onUpdateScheduleDates(event.target.value, endDate)}
+              />
+            </label>
+            <label>
+              <span>{dateLabels[language].end}</span>
+              <input
+                type="date"
+                min={startDate || undefined}
+                value={endDate}
+                onChange={event => onUpdateScheduleDates(startDate, event.target.value)}
+              />
+            </label>
+          </div>
+        )}
+        {intakeStep === 'budget' && (
+          <label>
+            <span>{stepLabels.budget}</span>
+            <input
+              type="text"
+              value={conditions.budget}
+              onChange={event => onUpdateCondition('budget', event.target.value)}
+              placeholder={stepLabels.budget}
+            />
+          </label>
+        )}
       </div>
       {(intakeStep === 'purpose' || intakeStep === 'ready' || conditions.purposes.length > 0) && (
         <div className="purpose-field">
@@ -975,17 +1156,23 @@ function ConditionSummaryItem({
   label,
   value,
   active,
+  onEdit,
 }: {
   language: Language;
   label: string;
   value: string;
   active: boolean;
+  onEdit: () => void;
 }) {
   return (
-    <div className={`condition-summary-item ${active ? 'condition-summary-item--active' : ''}`}>
+    <button
+      className={`condition-summary-item ${active ? 'condition-summary-item--active' : ''}`}
+      type="button"
+      onClick={onEdit}
+    >
       <span>{label}</span>
       <strong>{value || t(language, 'unspecified')}</strong>
-    </div>
+    </button>
   );
 }
 
@@ -1319,6 +1506,26 @@ function isNonSpotLine(title: string): boolean {
     new RegExp(NON_SPOT_KEYWORD_PATTERN, 'i').test(title) ||
     (new RegExp(MOVE_KEYWORD_PATTERN, 'i').test(title) && new RegExp(MOVE_DIRECTION_PATTERN, 'i').test(title))
   );
+}
+
+function isTransportHubTitle(title: string): boolean {
+  return /(駅|空港|港|バスターミナル|ターミナル|フェリーターミナル|Station|Airport|Port|Bus Terminal|Bahnhof|Flughafen|Hafen|车站|站|机场|港口|버스터미널|터미널|역|공항|항구)/i.test(title);
+}
+
+function cleanTransportHubTitle(rawTitle: string): string {
+  return rawTitle
+    .replace(/[（(][^）)]*[）)]/g, '')
+    .replace(/^.*(?:で|by|via)\s*/iu, '')
+    .replace(/(へ|に|を)?(出発|到着|帰着|発|着|集合|解散|乗換|乗り換え|戻る|Departure|Arrival|Depart|Arrive|Transfer|Abfahrt|Ankunft|出发|到达|换乘|출발|도착|환승).*$/iu, '')
+    .replace(/[へにを]$/u, '')
+    .replace(/^[^\w一-龯ぁ-んァ-ヶ가-힣]+|[^\w一-龯ぁ-んァ-ヶ가-힣]+$/g, '')
+    .trim();
+}
+
+function getTransportHubRole(rawTitle: string): PlanSpot['transportRole'] {
+  if (/(出発|発|Departure|Depart|Abfahrt|出发|출발)/iu.test(rawTitle)) return 'departure';
+  if (/(到着|帰着|着|へ|戻る|Arrival|Arrive|Ankunft|到达|도착)/iu.test(rawTitle)) return 'arrival';
+  return 'hub';
 }
 
 // Wikipediaの記事タイトルが観光地名と関連しているかを判定する。
@@ -1673,9 +1880,28 @@ function PlanSummaryCards({ language, conditions }: { language: Language; condit
 }
 
 type LatLng = { lat: number; lng: number };
-type PlanSpot = { name: string; time: string; address?: string };
+type PlanSpot = {
+  name: string;
+  time: string;
+  address?: string;
+  prefecture?: string;
+  municipality?: string;
+  day: number;
+  isRouteStart?: boolean;
+  transportRole?: 'departure' | 'arrival' | 'hub';
+};
 type GeoSpot = PlanSpot & LatLng;
 type GeocodeAttempt = { query: string; reason: string };
+type MapDayFilter = 'all' | number;
+type DestinationRegionContext = {
+  prefecture?: string;
+  allowedPrefectures: string[];
+  municipality?: string;
+  label: string;
+  source: 'destination' | 'plan' | 'none';
+};
+
+const ROUTE_DAY_COLORS = ['#2f80ed', '#16a34a', '#ef4444', '#f59e0b', '#8b5cf6', '#0891b2', '#db2777'];
 
 function sleep(ms: number) {
   return new Promise<void>(resolve => setTimeout(resolve, ms));
@@ -1693,6 +1919,56 @@ const geocodeCache = new Map<string, Promise<LatLng | null>>();
 // Nominatimの利用ポリシー（直列・1秒に1回まで）を守るためのリクエスト直列化チェーン。
 let geocodeQueue: Promise<unknown> = Promise.resolve();
 const GEOCODE_MIN_GAP_MS = 1100;
+
+const JAPANESE_PREFECTURES = [
+  { name: '北海道', aliases: ['北海道'] },
+  { name: '青森県', aliases: ['青森県', '青森'] },
+  { name: '岩手県', aliases: ['岩手県', '岩手'] },
+  { name: '宮城県', aliases: ['宮城県', '宮城'] },
+  { name: '秋田県', aliases: ['秋田県', '秋田'] },
+  { name: '山形県', aliases: ['山形県', '山形'] },
+  { name: '福島県', aliases: ['福島県', '福島'] },
+  { name: '茨城県', aliases: ['茨城県', '茨城'] },
+  { name: '栃木県', aliases: ['栃木県', '栃木'] },
+  { name: '群馬県', aliases: ['群馬県', '群馬'] },
+  { name: '埼玉県', aliases: ['埼玉県', '埼玉'] },
+  { name: '千葉県', aliases: ['千葉県', '千葉'] },
+  { name: '東京都', aliases: ['東京都', '東京'] },
+  { name: '神奈川県', aliases: ['神奈川県', '神奈川'] },
+  { name: '新潟県', aliases: ['新潟県', '新潟'] },
+  { name: '富山県', aliases: ['富山県', '富山'] },
+  { name: '石川県', aliases: ['石川県', '石川'] },
+  { name: '福井県', aliases: ['福井県', '福井'] },
+  { name: '山梨県', aliases: ['山梨県', '山梨'] },
+  { name: '長野県', aliases: ['長野県', '長野'] },
+  { name: '岐阜県', aliases: ['岐阜県', '岐阜'] },
+  { name: '静岡県', aliases: ['静岡県', '静岡'] },
+  { name: '愛知県', aliases: ['愛知県', '愛知'] },
+  { name: '三重県', aliases: ['三重県', '三重'] },
+  { name: '滋賀県', aliases: ['滋賀県', '滋賀'] },
+  { name: '京都府', aliases: ['京都府', '京都'] },
+  { name: '大阪府', aliases: ['大阪府', '大阪'] },
+  { name: '兵庫県', aliases: ['兵庫県', '兵庫'] },
+  { name: '奈良県', aliases: ['奈良県', '奈良'] },
+  { name: '和歌山県', aliases: ['和歌山県', '和歌山'] },
+  { name: '鳥取県', aliases: ['鳥取県', '鳥取'] },
+  { name: '島根県', aliases: ['島根県', '島根'] },
+  { name: '岡山県', aliases: ['岡山県', '岡山'] },
+  { name: '広島県', aliases: ['広島県', '広島'] },
+  { name: '山口県', aliases: ['山口県', '山口'] },
+  { name: '徳島県', aliases: ['徳島県', '徳島'] },
+  { name: '香川県', aliases: ['香川県', '香川'] },
+  { name: '愛媛県', aliases: ['愛媛県', '愛媛'] },
+  { name: '高知県', aliases: ['高知県', '高知'] },
+  { name: '福岡県', aliases: ['福岡県', '福岡'] },
+  { name: '佐賀県', aliases: ['佐賀県', '佐賀'] },
+  { name: '長崎県', aliases: ['長崎県', '長崎'] },
+  { name: '熊本県', aliases: ['熊本県', '熊本'] },
+  { name: '大分県', aliases: ['大分県', '大分'] },
+  { name: '宮崎県', aliases: ['宮崎県', '宮崎'] },
+  { name: '鹿児島県', aliases: ['鹿児島県', '鹿児島'] },
+  { name: '沖縄県', aliases: ['沖縄県', '沖縄'] },
+];
 
 function normalizeGeocodeQuery(value: string): string {
   return value
@@ -1714,12 +1990,110 @@ function compactAddressForGeocoding(address: string): string {
     .trim();
 }
 
-function getJapaneseAddressArea(address: string): string | null {
-  const normalized = normalizeGeocodeQuery(address);
-  const match = normalized.match(/^(.+?[都道府県])(.+?郡.+?[町村]|.+?市.+?区|.+?[市区町村])/);
-  if (!match) return null;
+function isUnknownAddress(address?: string): boolean {
+  return !address || /^(不明|未知|Unknown|Unbekannt|알 수 없음)$/i.test(address.trim());
+}
 
-  return `${match[1]}${match[2]}`;
+function findPrefectureMatch(value: string): { name: string; alias: string; index: number } | undefined {
+  const normalized = normalizeGeocodeQuery(value);
+
+  for (const prefecture of JAPANESE_PREFECTURES) {
+    for (const alias of prefecture.aliases) {
+      const index = normalized.indexOf(alias);
+      if (index >= 0) return { name: prefecture.name, alias, index };
+    }
+  }
+
+  return undefined;
+}
+
+function findPrefectures(value: string): string[] {
+  const normalized = normalizeGeocodeQuery(value);
+  const matches: Array<{ name: string; index: number }> = [];
+
+  for (const prefecture of JAPANESE_PREFECTURES) {
+    const indexes = prefecture.aliases
+      .map(alias => normalized.indexOf(alias))
+      .filter(index => index >= 0);
+
+    if (indexes.length > 0) {
+      matches.push({ name: prefecture.name, index: Math.min(...indexes) });
+    }
+  }
+
+  return matches
+    .sort((a, b) => a.index - b.index)
+    .map(match => match.name);
+}
+
+function parseJapaneseAddressRegion(address: string): Pick<PlanSpot, 'prefecture' | 'municipality'> {
+  const normalized = normalizeGeocodeQuery(address);
+  const prefectureMatch = findPrefectureMatch(normalized);
+  if (!prefectureMatch) return {};
+
+  const afterPrefecture = normalized.slice(prefectureMatch.index + prefectureMatch.alias.length);
+  const municipalityMatch = afterPrefecture.match(/^(.+?郡.+?[町村]|.+?市.+?区|.+?[市区町村])/);
+
+  return {
+    prefecture: prefectureMatch.name,
+    municipality: municipalityMatch?.[1],
+  };
+}
+
+function getJapaneseAddressArea(address: string): string | null {
+  const { prefecture, municipality } = parseJapaneseAddressRegion(address);
+  if (!prefecture || !municipality) return null;
+  return `${prefecture}${municipality}`;
+}
+
+function formatPlanDay(day: number, language: Language): string {
+  if (language === 'en') return `Day ${day}`;
+  if (language === 'de') return `Tag ${day}`;
+  if (language === 'zh') return `第${day}天`;
+  if (language === 'ko') return `${day}일차`;
+  return `${day}日目`;
+}
+
+function formatAllDaysLabel(language: Language): string {
+  if (language === 'en') return 'All days';
+  if (language === 'de') return 'Alle Tage';
+  if (language === 'zh') return '全日程';
+  if (language === 'ko') return '전체 일정';
+  return '全日程';
+}
+
+function extractDayNumber(line: string): number | null {
+  const normalized = line.normalize('NFKC');
+  const match = normalized.match(/(?:^|[#\s])(?:第\s*)?(\d{1,2})\s*(?:日目|日め|day|tag|天|일차|일째)/i);
+  return match ? Number(match[1]) : null;
+}
+
+function getDestinationRegionContext(destination: string, planText: string): DestinationRegionContext {
+  const destinationPrefectures = findPrefectures(destination);
+  const planPrefectures = findPrefectures(planText);
+  const allowedPrefectures = Array.from(new Set([...destinationPrefectures, ...planPrefectures]));
+
+  if (allowedPrefectures.length > 0) {
+    return {
+      prefecture: allowedPrefectures[0],
+      allowedPrefectures,
+      label: allowedPrefectures.join('・'),
+      source: destinationPrefectures.length > 0 ? 'destination' : 'plan',
+    };
+  }
+
+  return {
+    allowedPrefectures: [],
+    label: normalizeGeocodeQuery(destination),
+    source: 'none',
+  };
+}
+
+function isSpotInDestinationRegion(spot: PlanSpot, context: DestinationRegionContext): boolean {
+  if ((!spot.address || !spot.prefecture) && isStationLikeSpot(spot)) return true;
+  if (!spot.address || !spot.prefecture) return false;
+  if (context.allowedPrefectures.length === 0) return true;
+  return context.allowedPrefectures.includes(spot.prefecture);
 }
 
 function uniqueGeocodeAttempts(attempts: GeocodeAttempt[]): GeocodeAttempt[] {
@@ -1737,15 +2111,24 @@ function uniqueGeocodeAttempts(attempts: GeocodeAttempt[]): GeocodeAttempt[] {
     });
 }
 
-function buildSpotGeocodeAttempts(spot: PlanSpot, destination: string): GeocodeAttempt[] {
+function buildSpotGeocodeAttempts(
+  spot: PlanSpot,
+  destination: string,
+  context: DestinationRegionContext,
+): GeocodeAttempt[] {
   const attempts: GeocodeAttempt[] = [];
   const cleanDestination = normalizeGeocodeQuery(destination);
   const cleanName = normalizeGeocodeQuery(spot.name);
+  const regionPrefix = [spot.prefecture ?? context.prefecture, spot.municipality ?? context.municipality].filter(Boolean).join('');
 
   if (spot.address) {
     const exactAddress = normalizeGeocodeQuery(spot.address);
     const compactAddress = compactAddressForGeocoding(spot.address);
     const addressArea = getJapaneseAddressArea(spot.address);
+
+    if (regionPrefix) {
+      attempts.push({ query: `${regionPrefix} ${cleanName} ${exactAddress}`, reason: 'destination region + name + address' });
+    }
 
     attempts.push({ query: exactAddress, reason: 'address' });
 
@@ -1760,6 +2143,10 @@ function buildSpotGeocodeAttempts(spot: PlanSpot, destination: string): GeocodeA
     }
   }
 
+  if (regionPrefix) {
+    attempts.push({ query: `${regionPrefix} ${cleanName}`, reason: 'destination region + name' });
+  }
+
   attempts.push({ query: cleanName, reason: 'name' });
 
   if (cleanDestination && !cleanName.includes(cleanDestination)) {
@@ -1767,6 +2154,167 @@ function buildSpotGeocodeAttempts(spot: PlanSpot, destination: string): GeocodeA
   }
 
   return uniqueGeocodeAttempts(attempts);
+}
+
+function isStationLikeSpot(spot: PlanSpot): boolean {
+  return isTransportHubTitle(spot.name);
+}
+
+function baseStationNameFromSpot(name: string): string {
+  return cleanSpotTitle(name)
+    .replace(/[（(][^）)]*[）)]/g, '')
+    .replace(/(寺|神社|大社|公園|城跡|城|美術館|博物館|水族館|動物園|サンビーチ|ビーチ|海岸|温泉街|温泉|ロープウェイ|展望台|市場).*$/u, '')
+    .replace(/[・、。.\s]/g, '')
+    .trim();
+}
+
+function buildRouteStartStationAttempts(
+  firstSpot: PlanSpot,
+  destination: string,
+  context: DestinationRegionContext,
+): GeocodeAttempt[] {
+  const attempts: GeocodeAttempt[] = [];
+  const cleanDestination = normalizeGeocodeQuery(destination);
+  const regionPrefix = [firstSpot.prefecture ?? context.prefecture, firstSpot.municipality ?? context.municipality].filter(Boolean).join('');
+  const area = firstSpot.address ? getJapaneseAddressArea(firstSpot.address) : regionPrefix;
+  const baseName = baseStationNameFromSpot(firstSpot.name);
+
+  if (baseName.length >= 2) {
+    attempts.push({ query: `${regionPrefix} ${baseName}駅`, reason: 'first spot area + derived station' });
+    attempts.push({ query: `${baseName}駅`, reason: 'derived station' });
+  }
+
+  if (area) {
+    attempts.push({ query: `${area} ${firstSpot.name} 最寄り駅`, reason: 'address area + first spot nearest station' });
+    attempts.push({ query: `${area} 駅`, reason: 'address area station' });
+  }
+
+  if (cleanDestination) {
+    attempts.push({ query: `${cleanDestination}駅`, reason: 'destination station' });
+  }
+
+  return uniqueGeocodeAttempts(attempts);
+}
+
+function buildTransportHubGeocodeAttempts(
+  spot: PlanSpot,
+  destination: string,
+  context: DestinationRegionContext,
+): GeocodeAttempt[] {
+  const attempts: GeocodeAttempt[] = [];
+  const cleanName = normalizeGeocodeQuery(spot.name);
+  const cleanDestination = normalizeGeocodeQuery(destination);
+  const regionPrefix = [spot.prefecture ?? context.prefecture, spot.municipality ?? context.municipality].filter(Boolean).join('');
+
+  if (spot.address) {
+    const exactAddress = normalizeGeocodeQuery(spot.address);
+    const compactAddress = compactAddressForGeocoding(spot.address);
+
+    attempts.push({ query: `${cleanName} ${exactAddress}`, reason: 'transport hub + address' });
+    attempts.push({ query: `${exactAddress} ${cleanName}`, reason: 'address + transport hub' });
+    attempts.push({ query: exactAddress, reason: 'transport hub address' });
+
+    if (compactAddress !== exactAddress) {
+      attempts.push({ query: `${cleanName} ${compactAddress}`, reason: 'transport hub + normalized address' });
+      attempts.push({ query: compactAddress, reason: 'transport hub normalized address' });
+    }
+  }
+
+  if (regionPrefix) {
+    attempts.push({ query: `${regionPrefix} ${cleanName}`, reason: 'destination region + transport hub' });
+  }
+
+  if (cleanDestination && !cleanName.includes(cleanDestination)) {
+    attempts.push({ query: `${cleanDestination} ${cleanName}`, reason: 'destination + transport hub' });
+  }
+
+  return uniqueGeocodeAttempts(attempts);
+}
+
+function createRouteStartSpot(firstSpot: PlanSpot, destination: string, context: DestinationRegionContext): PlanSpot {
+  const baseName = baseStationNameFromSpot(firstSpot.name);
+  const fallbackName = normalizeGeocodeQuery(destination).replace(/[都道府県市区町村郡]$/u, '');
+  const stationName = `${baseName.length >= 2 ? baseName : fallbackName || destination}駅`;
+
+  return {
+    name: stationName,
+    time: 'START',
+    address: firstSpot.address,
+    prefecture: firstSpot.prefecture ?? context.prefecture,
+    municipality: firstSpot.municipality ?? context.municipality,
+    day: firstSpot.day,
+    isRouteStart: true,
+    transportRole: 'hub',
+  };
+}
+
+function getMapRouteSpots(
+  spots: PlanSpot[],
+  destination: string,
+  context: DestinationRegionContext,
+): PlanSpot[] {
+  let routeSpots = spots.slice();
+  const firstTourismIndex = routeSpots.findIndex(spot => !isStationLikeSpot(spot));
+  const leadingTransportSpots =
+    firstTourismIndex >= 0 ? routeSpots.slice(0, firstTourismIndex) : routeSpots;
+  const firstArrivalIndex = leadingTransportSpots.findIndex(
+    spot => isStationLikeSpot(spot) && spot.transportRole === 'arrival',
+  );
+
+  // 旅行先到着前の出発地側交通拠点は地図に出さず、本文中の最初の「到着」交通拠点から描画する。
+  if (firstArrivalIndex > 0) {
+    routeSpots = routeSpots.slice(firstArrivalIndex);
+  }
+
+  const hasTransportHubInRoute = routeSpots.some(isStationLikeSpot);
+  const firstSpotIndex = routeSpots.findIndex(spot => spot.day === 1 && !isStationLikeSpot(spot));
+
+  // 本文に駅・空港・バスターミナル等が一切無い場合だけ、補助的な開始駅を追加する。
+  if (firstSpotIndex >= 0 && !hasTransportHubInRoute) {
+    routeSpots.splice(
+      firstSpotIndex,
+      0,
+      createRouteStartSpot(routeSpots[firstSpotIndex], destination, context),
+    );
+  }
+
+  return routeSpots;
+}
+
+function groupGeoSpotsByDay(spots: GeoSpot[]): Array<{ day: number; color: string; spots: GeoSpot[] }> {
+  const groups = new Map<number, GeoSpot[]>();
+
+  for (const spot of spots) {
+    const day = spot.day || 1;
+    groups.set(day, [...(groups.get(day) ?? []), spot]);
+  }
+
+  return Array.from(groups.entries())
+    .sort(([a], [b]) => a - b)
+    .map(([day, daySpots], index) => ({
+      day,
+      color: ROUTE_DAY_COLORS[index % ROUTE_DAY_COLORS.length],
+      spots: daySpots,
+    }));
+}
+
+const markerIconCache = new Map<string, L.DivIcon>();
+
+function getRouteMarkerIcon(color: string, isRouteStart?: boolean): L.DivIcon {
+  const key = `${color}-${isRouteStart ? 'start' : 'spot'}`;
+  const cached = markerIconCache.get(key);
+  if (cached) return cached;
+
+  const icon = L.divIcon({
+    className: '',
+    html: `<span class="route-marker ${isRouteStart ? 'route-marker--start' : ''}" style="--route-color: ${color}"></span>`,
+    iconSize: [24, 34],
+    iconAnchor: [12, 34],
+    popupAnchor: [0, -30],
+  });
+
+  markerIconCache.set(key, icon);
+  return icon;
 }
 
 // OpenStreetMapのNominatimで地名を座標へ変換する（無料・APIキー不要）。
@@ -1842,27 +2390,81 @@ function extractPlanSpots(planText: string): PlanSpot[] {
 
   const spots: PlanSpot[] = [];
   const seen = new Set<string>();
+  const transportHubAddressBook = new Map<string, string>();
+  const pendingTransportHubIndexes = new Map<string, number[]>();
+  let currentDay = 1;
+
+  const findFollowingAddress = (lineIndex: number): string | undefined => {
+    for (let j = lineIndex + 1; j < Math.min(lineIndex + 6, lines.length); j++) {
+      const addressMatch = lines[j].match(new RegExp(`^-?\\s*(?:${ADDRESS_LABEL_PATTERN})[:：]\\s*(.+)$`));
+      if (addressMatch) return addressMatch[1].trim();
+
+      if (j > lineIndex + 1 && (extractDayNumber(lines[j]) || /^-?\s*\d{1,2}:\d{2}/.test(lines[j]))) {
+        break;
+      }
+    }
+
+    return undefined;
+  };
 
   const addSpot = (nameRaw: string, time: string, addressRaw?: string) => {
     const rawTitle = nameRaw.split(/[:：]/)[0].trim();
-    if (!rawTitle || isNonSpotLine(rawTitle)) return;
+    const isTransportHub = isTransportHubTitle(rawTitle);
+    if (!rawTitle || (isNonSpotLine(rawTitle) && !isTransportHub)) return;
 
-    const name = cleanSpotTitle(rawTitle);
-    if (name.length < 2 || seen.has(`${time}-${name}`)) return;
+    const name = isTransportHub ? cleanTransportHubTitle(rawTitle) : cleanSpotTitle(rawTitle);
+    if (name.length < 2 || seen.has(`${currentDay}-${time}-${name}`)) return;
 
     // 「不明」系（不明、未知、Unknown、Unbekannt、알 수 없음）は推測住所ではないので住所として扱わず、名前フォールバックに回す。
-    const isUnknownAddress = !!addressRaw && /^(不明|未知|Unknown|Unbekannt|알 수 없음)$/i.test(addressRaw);
-    const address =
-      addressRaw && !isUnknownAddress && !addressRaw.includes('宿所在地')
-        ? addressRaw.trim()
-        : undefined;
+    const directAddress = !isUnknownAddress(addressRaw) && !addressRaw?.includes('宿所在地')
+      ? addressRaw?.trim()
+      : undefined;
+    const address = directAddress ?? (isTransportHub ? transportHubAddressBook.get(name) : undefined);
+    const region = address ? parseJapaneseAddressRegion(address) : {};
 
-    seen.add(`${time}-${name}`);
-    spots.push({ name, time, address });
+    seen.add(`${currentDay}-${time}-${name}`);
+    const spot: PlanSpot = {
+      name,
+      time,
+      address,
+      day: currentDay,
+      transportRole: isTransportHub ? getTransportHubRole(rawTitle) : undefined,
+      ...region,
+    };
+    spots.push(spot);
+
+    if (!isTransportHub) return;
+
+    const spotIndex = spots.length - 1;
+    if (directAddress) {
+      transportHubAddressBook.set(name, directAddress);
+      const pendingIndexes = pendingTransportHubIndexes.get(name) ?? [];
+      const directRegion = parseJapaneseAddressRegion(directAddress);
+
+      for (const pendingIndex of pendingIndexes) {
+        spots[pendingIndex] = {
+          ...spots[pendingIndex],
+          address: directAddress,
+          ...directRegion,
+        };
+      }
+
+      pendingTransportHubIndexes.delete(name);
+      return;
+    }
+
+    if (!address) {
+      pendingTransportHubIndexes.set(name, [...(pendingTransportHubIndexes.get(name) ?? []), spotIndex]);
+    }
   };
 
   for (let i = 0; i < lines.length; i++) {
     const trimmed = lines[i];
+    const dayNumber = extractDayNumber(trimmed);
+    if (dayNumber) {
+      currentDay = dayNumber;
+      continue;
+    }
 
     // 既存形式：- 09:00 - スポット名 / 住所：...
     const oneLineMatch = trimmed.match(/^-?\s*(\d{1,2}:\d{2})\s*-\s*(.+)$/);
@@ -1871,7 +2473,14 @@ function extractPlanSpots(planText: string): PlanSpot[] {
       const detail = oneLineMatch[2].replace(new RegExp(`\\s\\/\\s*(?:${IMAGE_LABEL_PATTERN})[:：]\\s*\\S+`, 'g'), '');
       const titlePart = detail.split(/\s*\/\s*/)[0];
       const addressMatch = detail.match(new RegExp(`(?:${ADDRESS_LABEL_PATTERN})[:：]\\s*([^/]+)`));
-      addSpot(titlePart, time, addressMatch?.[1]?.trim());
+      addSpot(titlePart, time, addressMatch?.[1]?.trim() ?? findFollowingAddress(i));
+      continue;
+    }
+
+    // 例: 08:00 横浜駅 出発 / 10:30 京都駅 到着 のようなハイフン無し行にも対応する。
+    const looseTimedMatch = trimmed.match(/^-?\s*(\d{1,2}:\d{2})\s+(.+)$/);
+    if (looseTimedMatch) {
+      addSpot(looseTimedMatch[2], looseTimedMatch[1], findFollowingAddress(i));
       continue;
     }
 
@@ -1882,19 +2491,7 @@ function extractPlanSpots(planText: string): PlanSpot[] {
       const nameLine = lines[i + 1];
       if (!nameLine) continue;
 
-      let address: string | undefined;
-
-      for (let j = i + 2; j < Math.min(i + 8, lines.length); j++) {
-        const addressMatch = lines[j].match(new RegExp(`^(?:${ADDRESS_LABEL_PATTERN})[:：]\\s*(.+)$`));
-        if (addressMatch) {
-          address = addressMatch[1].trim();
-          break;
-        }
-
-        if (/^\d{1,2}:\d{2}$/.test(lines[j])) break;
-      }
-
-      addSpot(nameLine, time, address);
+      addSpot(nameLine, time, findFollowingAddress(i));
     }
   }
 
@@ -1947,8 +2544,13 @@ function MapPreview({
 }) {
   // タイムライン行からジオコーディング対象を抽出（planText変化時のみ再計算）
   const spots = useMemo(() => extractPlanSpots(planText), [planText]);
+  const destinationRegion = useMemo(
+    () => getDestinationRegionContext(destination, planText),
+    [destination, planText],
+  );
   const [geoSpots, setGeoSpots] = useState<GeoSpot[]>([]);
   const [isLocating, setIsLocating] = useState(false);
+  const [activeMapDay, setActiveMapDay] = useState<MapDayFilter>('all');
 
   // 抽出スポットをNominatimで順番にジオコーディングし、取れたものから地図に反映する。
   useEffect(() => {
@@ -1964,13 +2566,31 @@ function MapPreview({
 
     (async () => {
       const collected: GeoSpot[] = [];
-      for (const spot of spots) {
+      const routeSpots = getMapRouteSpots(spots, destination, destinationRegion);
+
+      for (const spot of routeSpots) {
         if (cancelled) return;
 
         let coord: LatLng | null = null;
-        const attempts = buildSpotGeocodeAttempts(spot, destination);
 
-        // 住所単体で取れない場合も、施設名+住所、施設名+市区町村、施設名の順で試す。
+        if (!isSpotInDestinationRegion(spot, destinationRegion)) {
+          console.warn("地点除外", {
+            name: spot.name,
+            address: spot.address,
+            spotPrefecture: spot.prefecture,
+            destinationRegion,
+            reason: 'missing address/prefecture or outside destination prefecture',
+          });
+          continue;
+        }
+
+        const attempts = spot.isRouteStart
+          ? buildRouteStartStationAttempts(spot, destination, destinationRegion)
+          : isStationLikeSpot(spot)
+            ? buildTransportHubGeocodeAttempts(spot, destination, destinationRegion)
+            : buildSpotGeocodeAttempts(spot, destination, destinationRegion);
+
+        // 住所単体で取れない場合も、旅行先地域+施設名+住所を優先して段階的に試す。
         // destinationは広域・近隣スポットでノイズになりやすいため、最後の補助クエリに留める。
         for (const attempt of attempts) {
           coord = await geocodePlace(attempt.query); // 直列＋1.1秒間隔はgeocodePlace内で担保
@@ -1978,6 +2598,11 @@ function MapPreview({
           console.log("地点検索", {
             name: spot.name,
             address: spot.address,
+            day: spot.day,
+            isRouteStart: spot.isRouteStart,
+            transportRole: spot.transportRole,
+            spotPrefecture: spot.prefecture,
+            destinationRegion,
             reason: attempt.reason,
             query: attempt.query,
             coord,
@@ -1999,17 +2624,80 @@ function MapPreview({
     return () => {
       cancelled = true;
     };
-  }, [planGenerated, destination, spots]);
+  }, [planGenerated, destination, destinationRegion, spots]);
 
-  const positions = useMemo<[number, number][]>(
-    () => geoSpots.map(spot => [spot.lat, spot.lng]),
-    [geoSpots],
+  const routeDayGroups = useMemo(() => groupGeoSpotsByDay(geoSpots), [geoSpots]);
+  const availableDays = useMemo(() => routeDayGroups.map(group => group.day), [routeDayGroups]);
+  const effectiveMapDay: MapDayFilter =
+    activeMapDay === 'all' || availableDays.includes(activeMapDay) ? activeMapDay : 'all';
+  const visibleGeoSpots = useMemo(
+    () => effectiveMapDay === 'all' ? geoSpots : geoSpots.filter(spot => spot.day === effectiveMapDay),
+    [effectiveMapDay, geoSpots],
   );
+  const positions = useMemo<[number, number][]>(
+    () => visibleGeoSpots.map(spot => [spot.lat, spot.lng]),
+    [visibleGeoSpots],
+  );
+  const visibleRouteDayGroups = useMemo(
+    () => effectiveMapDay === 'all'
+      ? routeDayGroups
+      : routeDayGroups.filter(group => group.day === effectiveMapDay),
+    [effectiveMapDay, routeDayGroups],
+  );
+  const dayColorMap = useMemo(() => {
+    const colorMap = new Map<number, string>();
+    for (const group of routeDayGroups) {
+      colorMap.set(group.day, group.color);
+    }
+    return colorMap;
+  }, [routeDayGroups]);
+  const routeSegments = useMemo(
+    () => visibleGeoSpots.slice(1).map((spot, index) => {
+      const previousSpot = visibleGeoSpots[index];
+      return {
+        key: `${previousSpot.day}-${previousSpot.name}-${index}-${spot.day}-${spot.name}`,
+        color: dayColorMap.get(previousSpot.day) ?? ROUTE_DAY_COLORS[0],
+        positions: [
+          [previousSpot.lat, previousSpot.lng],
+          [spot.lat, spot.lng],
+        ] as [number, number][],
+      };
+    }),
+    [dayColorMap, visibleGeoSpots],
+  );
+
+  useEffect(() => {
+    if (activeMapDay !== 'all' && !availableDays.includes(activeMapDay)) {
+      setActiveMapDay('all');
+    }
+  }, [activeMapDay, availableDays]);
 
   // 座標が1件以上取れたら本物の地図を表示
   if (geoSpots.length > 0) {
     return (
       <div className="map-preview">
+        {availableDays.length > 1 && (
+          <div className="map-day-tabs" aria-label="map day filter">
+            <button
+              type="button"
+              className={effectiveMapDay === 'all' ? 'map-day-tab map-day-tab--active' : 'map-day-tab'}
+              onClick={() => setActiveMapDay('all')}
+            >
+              {formatAllDaysLabel(language)}
+            </button>
+            {routeDayGroups.map(group => (
+              <button
+                key={`map-day-tab-${group.day}`}
+                type="button"
+                className={effectiveMapDay === group.day ? 'map-day-tab map-day-tab--active' : 'map-day-tab'}
+                onClick={() => setActiveMapDay(group.day)}
+              >
+                <i style={{ backgroundColor: group.color }} />
+                {formatPlanDay(group.day, language)}
+              </button>
+            ))}
+          </div>
+        )}
         <div className="map-leaflet">
           <MapContainer
             className="map-leaflet__canvas"
@@ -2021,24 +2709,40 @@ function MapPreview({
               attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
               url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
             />
-            {geoSpots.map((spot, index) => (
-              <Marker key={`${spot.name}-${index}`} position={[spot.lat, spot.lng]}>
-                <Popup>
-                  {spot.time && (
-                    <>
-                      <strong>{spot.time}</strong>
-                      <br />
-                    </>
-                  )}
-                  {spot.name}
-                </Popup>
-              </Marker>
-            ))}
-            {positions.length >= 2 && (
-              <Polyline positions={positions} color="#2f80ed" weight={4} opacity={0.85} />
+            {visibleRouteDayGroups.flatMap(group =>
+              group.spots.map((spot, index) => (
+                <Marker
+                  key={`${spot.day}-${spot.name}-${index}`}
+                  position={[spot.lat, spot.lng]}
+                  icon={getRouteMarkerIcon(group.color, spot.isRouteStart)}
+                >
+                  <Popup>
+                    <strong>
+                      {formatPlanDay(spot.day, language)} {spot.isRouteStart ? '' : spot.time} {spot.name}
+                    </strong>
+                  </Popup>
+                </Marker>
+              )),
             )}
+            {routeSegments.map(segment => (
+              <Polyline
+                key={segment.key}
+                positions={segment.positions}
+                color={segment.color}
+                weight={4}
+                opacity={0.85}
+              />
+            ))}
             <FitBounds positions={positions} />
           </MapContainer>
+        </div>
+        <div className="map-route-legend" aria-label="route legend">
+          {visibleRouteDayGroups.map(group => (
+            <span key={`legend-${group.day}`}>
+              <i style={{ backgroundColor: group.color }} />
+              {formatPlanDay(group.day, language)}
+            </span>
+          ))}
         </div>
         <h2>{(destination || t(language, 'loadingPlanFallbackDestination'))}{t(language, 'mapRouteTitleSuffix')}</h2>
         <p>
