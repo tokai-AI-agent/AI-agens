@@ -15,7 +15,7 @@
 
 body {
   margin: 0;
-  min-width: 321px;
+  min-width: 320px;
   min-height: 100vh;
   background: #f7fafc;
 }
@@ -112,6 +112,21 @@ button {
 .nav-button--active {
   background: #e3f2fd;
   color: #2f80ed;
+}
+
+/* 「保存したプラン」の件数バッジ */
+.nav-badge {
+  margin-left: auto;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: #2f80ed;
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 800;
+  display: grid;
+  place-items: center;
 }
 
 .travel-note {
@@ -419,6 +434,14 @@ button {
   font-weight: 800;
 }
 
+/* 目的が任意であることを伝える補助テキスト */
+.purpose-hint {
+  margin: 0;
+  color: #94a3b8;
+  font-size: 12px;
+  font-weight: 600;
+}
+
 .condition-grid input {
   width: 100%;
   min-height: 42px;
@@ -472,6 +495,121 @@ button {
   overflow-wrap: anywhere;
 }
 
+.condition-summary-item__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.condition-summary-item--editing {
+  border-color: #2f80ed;
+  background: #eff8ff;
+  box-shadow: 0 0 0 3px rgba(47, 128, 237, 0.14);
+}
+
+/* 各条件の「編集」ボタン。控えめなテキストボタンにして入力値を邪魔しない。 */
+.condition-edit-button {
+  flex-shrink: 0;
+  padding: 2px 7px;
+  border: 1px solid #cfe0fb;
+  border-radius: 999px;
+  background: #ffffff;
+  color: #2f80ed;
+  font-size: 11px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.condition-edit-button:hover {
+  background: #eff6ff;
+  border-color: #2f80ed;
+}
+
+/* 入力ミスを直す編集パネル。条件サマリーの下に全幅で開く。 */
+.condition-editor {
+  margin-top: 12px;
+  padding: 14px;
+  border: 1px solid #cfe0fb;
+  border-radius: 8px;
+  background: #f8fbff;
+  display: grid;
+  gap: 12px;
+}
+
+.condition-editor__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.condition-editor__head strong {
+  color: #1f2937;
+  font-size: 14px;
+}
+
+.condition-editor__cancel {
+  padding: 4px 10px;
+  border: 1px solid #e5e7eb;
+  border-radius: 999px;
+  background: #ffffff;
+  color: #6b7280;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.condition-editor__cancel:hover {
+  border-color: #cbd5e1;
+  color: #374151;
+}
+
+.text-condition-editor {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.text-condition-editor input {
+  flex: 1 1 160px;
+  min-height: 42px;
+  padding: 0 12px;
+  border: 1px solid #dbe4ee;
+  border-radius: 8px;
+  outline: 0;
+  background: #ffffff;
+  color: #1f2937;
+}
+
+.text-condition-editor input:focus {
+  border-color: #2f80ed;
+  box-shadow: 0 0 0 3px rgba(47, 128, 237, 0.12);
+}
+
+.condition-editor__save,
+.condition-editor__done {
+  min-height: 42px;
+  padding: 0 16px;
+  border: 0;
+  border-radius: 8px;
+  background: #2f80ed;
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.condition-editor__done {
+  justify-self: start;
+}
+
+.condition-editor__save:hover,
+.condition-editor__done:hover {
+  background: #2567c0;
+}
+
 .purpose-field {
   margin-top: 14px;
 }
@@ -490,6 +628,50 @@ button {
   display: flex;
   flex-wrap: wrap;
   gap: 9px;
+}
+
+.other-purpose-input {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 10px;
+}
+
+.other-purpose-input input {
+  flex: 1 1 160px;
+  min-height: 40px;
+  padding: 0 12px;
+  border: 1px solid #dbe4ee;
+  border-radius: 8px;
+  outline: 0;
+  background: #ffffff;
+  color: #1f2937;
+}
+
+.other-purpose-input input:focus {
+  border-color: #2f80ed;
+  box-shadow: 0 0 0 3px rgba(47, 128, 237, 0.12);
+}
+
+.other-purpose-add {
+  min-height: 40px;
+  padding: 0 16px;
+  border: 0;
+  border-radius: 8px;
+  background: #2f80ed;
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.other-purpose-add:hover {
+  background: #2567c0;
+}
+
+.other-purpose-add:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .reply-chip {
@@ -767,13 +949,15 @@ button {
 }
 
 .plan-hero {
+  position: relative;
   min-height: 190px;
   margin-bottom: 16px;
   border-radius: 8px;
   overflow: hidden;
-  background-position: center;
-  background-size: cover;
-  background-color: #e0f2fe;
+  /* 画像が取得できないときのベース背景（空白ヘッダー用） */
+  background:
+    linear-gradient(135deg, rgba(47, 128, 237, 0.18), rgba(86, 204, 242, 0.22)),
+    #eff8ff;
   box-shadow: 0 14px 34px rgba(31, 41, 55, 0.1);
 }
 
@@ -783,7 +967,17 @@ button {
     #eff8ff;
 }
 
+.plan-hero-image {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+}
+
 .plan-hero-overlay {
+  position: relative;
   min-height: 190px;
   padding: 22px;
   display: flex;
@@ -1056,6 +1250,11 @@ button {
   align-items: start;
 }
 
+/* 移動行など画像を出さない行は、テキストを全幅で表示する */
+.timeline-markdown-body--full {
+  grid-template-columns: minmax(0, 1fr);
+}
+
 .timeline-markdown-card h3 {
   margin: 0;
   color: #111827;
@@ -1097,6 +1296,22 @@ button {
   display: block;
   object-fit: cover;
   background: #eef2f7;
+}
+
+/* 写真の読み込み中（Wikipedia取得待ちなど）に表示するシマー */
+.image-loading {
+  background: linear-gradient(135deg, #e2e8f0 0%, #f1f5f9 50%, #e2e8f0 100%);
+  background-size: 200% 100%;
+  animation: imageShimmer 1.4s ease-in-out infinite;
+}
+
+@keyframes imageShimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
 }
 
 .timeline-markdown-placeholder {
@@ -1176,6 +1391,43 @@ button {
     #f0f9ff;
   background-size: 44px 44px;
   overflow: hidden;
+}
+
+/* Leafletは高さ0だと地図が描画されないため、コンテナに明示的な高さを与える */
+.map-leaflet {
+  height: 360px;
+  margin-bottom: 18px;
+  border: 1px solid #dbeafe;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.map-leaflet__canvas {
+  width: 100%;
+  height: 100%;
+}
+
+/* ジオコーディング中のローディング表示 */
+.map-locating {
+  height: 360px;
+  margin-bottom: 18px;
+  border: 1px solid #dbeafe;
+  border-radius: 8px;
+  background: #f0f9ff;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  padding: 24px;
+  text-align: center;
+}
+
+.map-locating p {
+  margin: 0;
+  color: #6b7280;
+  font-size: 14px;
+  line-height: 1.7;
 }
 
 .map-road {
