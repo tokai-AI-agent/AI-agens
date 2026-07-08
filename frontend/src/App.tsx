@@ -1342,10 +1342,15 @@ function TimelineMarkdownItem({
   const [titlePart, ...metaParts] = detailWithoutImage.split(/\s*\/\s*/);
   const [title, comment] = titlePart.split(/[:：]/);
   const displayMetaParts = metaParts.filter(part => part.trim());
-  const normalizedTitle = title.trim();
-  // 移動・出発などスポットではない行には画像を付けない（無関係な画像が入るのを防ぐ）
+  
+  // ★追加ロジック1：カテゴリ判定と画面表示用タイトルの整形
+  const rawTitle = (title || '').trim();
+  const isSightseeing = rawTitle.includes('[観光]');
+  // 画面には「[観光] 江島神社」ではなく「江島神社」と綺麗に表示させる
+  const normalizedTitle = rawTitle.replace(/\[(観光|グルメ)\]\s*/, '').trim();
+
+  // 移動・出発などスポットではない行には画像を付けない
   const isMoveLine = isNonSpotLine(normalizedTitle);
-  // imageBankの曖昧一致は、短い別名による誤マッチを防ぐため3文字以上の一致に限定する
   const fuzzyImage = Object.entries(imageBank).find(([alt]) => {
     const cleanAlt = alt.trim();
     return (
@@ -1353,7 +1358,14 @@ function TimelineMarkdownItem({
       (normalizedTitle.includes(cleanAlt) || cleanAlt.includes(normalizedTitle))
     );
   })?.[1];
-  const matchedImageSrc = inlineImageSrc ?? imageBank[normalizedTitle] ?? fuzzyImage;
+
+  // 画像URLの候補を決定
+  let matchedImageSrc: string | undefined = inlineImageSrc ?? imageBank[normalizedTitle] ?? fuzzyImage;
+
+  // ★追加ロジック2：観光地の場合はTavilyの画像を無視して、Wikipedia検索を強制発動させる
+  if (isSightseeing) {
+    matchedImageSrc = undefined;
+  }
 
   return (
     <article className="timeline-markdown-item">
