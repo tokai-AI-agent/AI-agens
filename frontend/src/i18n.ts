@@ -219,6 +219,30 @@ export type Dict = {
   stepPurpose: string;
   stepReady: string;
 
+  calendarPrevMonth: string;
+  calendarNextMonth: string;
+  calendarConfirm: string;
+  calendarPickStart: string;
+  calendarPickEndSuffix: string;
+  weatherFieldLabel: string;
+  weatherPromptSelectDate: string;
+  weatherLoading: string;
+  weatherUnavailable: string;
+  weatherHigh: string;
+  weatherLow: string;
+  weatherPrecipitation: string;
+  weatherClear: string;
+  weatherMostlyClear: string;
+  weatherPartlyCloudy: string;
+  weatherCloudy: string;
+  weatherFog: string;
+  weatherDrizzle: string;
+  weatherRain: string;
+  weatherSnow: string;
+  weatherRainShowers: string;
+  weatherSnowShowers: string;
+  weatherThunderstorm: string;
+
   purposeLabels: Record<PurposeId, string>;
 };
 
@@ -390,6 +414,30 @@ export const DICTIONARIES: Record<Language, Dict> = {
     stepBudget: '予算',
     stepPurpose: '目的',
     stepReady: '生成準備',
+
+    calendarPrevMonth: '前の月',
+    calendarNextMonth: '次の月',
+    calendarConfirm: 'この日程で決定',
+    calendarPickStart: '開始日をタップしてください',
+    calendarPickEndSuffix: '（終了日を選んでください）',
+    weatherFieldLabel: '天気',
+    weatherPromptSelectDate: '旅行のある日を選ぶと、その日の天気を表示します。',
+    weatherLoading: '天気情報を取得中…',
+    weatherUnavailable: 'この日の天気予報はまだ取得できません（数日前から表示されます）。',
+    weatherHigh: '最高',
+    weatherLow: '最低',
+    weatherPrecipitation: '降水確率',
+    weatherClear: '快晴',
+    weatherMostlyClear: '晴れ',
+    weatherPartlyCloudy: '晴れ時々くもり',
+    weatherCloudy: 'くもり',
+    weatherFog: '霧',
+    weatherDrizzle: '霧雨',
+    weatherRain: '雨',
+    weatherSnow: '雪',
+    weatherRainShowers: 'にわか雨',
+    weatherSnowShowers: 'にわか雪',
+    weatherThunderstorm: '雷雨',
 
     purposeLabels: {
       sightseeing: '観光',
@@ -571,6 +619,30 @@ export const DICTIONARIES: Record<Language, Dict> = {
     stepPurpose: 'Purpose',
     stepReady: 'Ready to generate',
 
+    calendarPrevMonth: 'Previous month',
+    calendarNextMonth: 'Next month',
+    calendarConfirm: 'Confirm these dates',
+    calendarPickStart: 'Tap a start date',
+    calendarPickEndSuffix: ' (select an end date)',
+    weatherFieldLabel: 'Weather',
+    weatherPromptSelectDate: 'Select a day of your trip to see the weather.',
+    weatherLoading: 'Loading weather…',
+    weatherUnavailable: "This day's forecast isn't available yet (shown a few days in advance).",
+    weatherHigh: 'High',
+    weatherLow: 'Low',
+    weatherPrecipitation: 'Precipitation',
+    weatherClear: 'Clear',
+    weatherMostlyClear: 'Mostly clear',
+    weatherPartlyCloudy: 'Partly cloudy',
+    weatherCloudy: 'Cloudy',
+    weatherFog: 'Fog',
+    weatherDrizzle: 'Drizzle',
+    weatherRain: 'Rain',
+    weatherSnow: 'Snow',
+    weatherRainShowers: 'Rain showers',
+    weatherSnowShowers: 'Snow showers',
+    weatherThunderstorm: 'Thunderstorm',
+
     purposeLabels: {
       sightseeing: 'Sightseeing',
       food: 'Food',
@@ -750,6 +822,30 @@ export const DICTIONARIES: Record<Language, Dict> = {
     stepBudget: 'Budget',
     stepPurpose: 'Zweck',
     stepReady: 'Bereit zum Erstellen',
+
+    calendarPrevMonth: 'Vorheriger Monat',
+    calendarNextMonth: 'Nächster Monat',
+    calendarConfirm: 'Diese Daten bestätigen',
+    calendarPickStart: 'Startdatum antippen',
+    calendarPickEndSuffix: ' (Enddatum auswählen)',
+    weatherFieldLabel: 'Wetter',
+    weatherPromptSelectDate: 'Wähle einen Reisetag, um das Wetter zu sehen.',
+    weatherLoading: 'Wetter wird geladen…',
+    weatherUnavailable: 'Die Vorhersage für diesen Tag ist noch nicht verfügbar (erst wenige Tage im Voraus).',
+    weatherHigh: 'Hoch',
+    weatherLow: 'Tief',
+    weatherPrecipitation: 'Niederschlag',
+    weatherClear: 'Klar',
+    weatherMostlyClear: 'Meist klar',
+    weatherPartlyCloudy: 'Teilweise bewölkt',
+    weatherCloudy: 'Bewölkt',
+    weatherFog: 'Nebel',
+    weatherDrizzle: 'Nieselregen',
+    weatherRain: 'Regen',
+    weatherSnow: 'Schnee',
+    weatherRainShowers: 'Regenschauer',
+    weatherSnowShowers: 'Schneeschauer',
+    weatherThunderstorm: 'Gewitter',
 
     purposeLabels: {
       sightseeing: 'Sightseeing',
@@ -931,6 +1027,30 @@ export const DICTIONARIES: Record<Language, Dict> = {
     stepPurpose: '目的',
     stepReady: '准备生成',
 
+    calendarPrevMonth: '上个月',
+    calendarNextMonth: '下个月',
+    calendarConfirm: '确认此日期',
+    calendarPickStart: '请点击选择开始日期',
+    calendarPickEndSuffix: '（请选择结束日期）',
+    weatherFieldLabel: '天气',
+    weatherPromptSelectDate: '选择旅行中的某一天即可查看当天天气。',
+    weatherLoading: '正在获取天气信息…',
+    weatherUnavailable: '暂时无法获取该日期的天气预报（仅提前几天显示）。',
+    weatherHigh: '最高',
+    weatherLow: '最低',
+    weatherPrecipitation: '降水概率',
+    weatherClear: '晴朗',
+    weatherMostlyClear: '晴',
+    weatherPartlyCloudy: '多云转晴',
+    weatherCloudy: '多云',
+    weatherFog: '雾',
+    weatherDrizzle: '毛毛雨',
+    weatherRain: '雨',
+    weatherSnow: '雪',
+    weatherRainShowers: '阵雨',
+    weatherSnowShowers: '阵雪',
+    weatherThunderstorm: '雷雨',
+
     purposeLabels: {
       sightseeing: '观光',
       food: '美食',
@@ -1110,6 +1230,30 @@ export const DICTIONARIES: Record<Language, Dict> = {
     stepBudget: '예산',
     stepPurpose: '목적',
     stepReady: '생성 준비',
+
+    calendarPrevMonth: '이전 달',
+    calendarNextMonth: '다음 달',
+    calendarConfirm: '이 일정으로 확정',
+    calendarPickStart: '시작일을 선택하세요',
+    calendarPickEndSuffix: ' (종료일을 선택하세요)',
+    weatherFieldLabel: '날씨',
+    weatherPromptSelectDate: '여행 중 하루를 선택하면 그날의 날씨를 표시합니다.',
+    weatherLoading: '날씨 정보를 불러오는 중…',
+    weatherUnavailable: '이 날짜의 예보는 아직 제공되지 않습니다 (며칠 전부터 표시됩니다).',
+    weatherHigh: '최고',
+    weatherLow: '최저',
+    weatherPrecipitation: '강수 확률',
+    weatherClear: '맑음',
+    weatherMostlyClear: '대체로 맑음',
+    weatherPartlyCloudy: '구름 조금',
+    weatherCloudy: '흐림',
+    weatherFog: '안개',
+    weatherDrizzle: '이슬비',
+    weatherRain: '비',
+    weatherSnow: '눈',
+    weatherRainShowers: '소나기',
+    weatherSnowShowers: '소나기눈',
+    weatherThunderstorm: '뇌우',
 
     purposeLabels: {
       sightseeing: '관광',

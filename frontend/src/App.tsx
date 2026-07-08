@@ -133,6 +133,328 @@ function dateRangeDisplay(language: Language, startDate: string, endDate: string
   return `${formatDate(startDate)} - ${formatDate(endDate)} / ${dayLabel}`;
 }
 
+// 日付を "yyyy-mm-dd" 形式にする（<input type="date">やAPI呼び出しのキーと同じ形式）。
+function toIsoDate(date: Date): string {
+  const year = date.getFullYear();
+  const month = `${date.getMonth() + 1}`.padStart(2, '0');
+  const day = `${date.getDate()}`.padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+function startOfDay(date: Date): Date {
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate());
+}
+
+function isSameDay(a: Date, b: Date): boolean {
+  return (
+    a.getFullYear() === b.getFullYear() &&
+    a.getMonth() === b.getMonth() &&
+    a.getDate() === b.getDate()
+  );
+}
+
+// 日程入力用のカレンダー（範囲選択）。1回目のクリックで開始日、2回目で終了日を決める。
+// 過去日は選べないようにし、「決定」を押すと開始日・終了日をISO形式で親へ渡す。外部ライブラリは使わない。
+function DateRangeCalendar({
+  language,
+  startDate,
+  endDate,
+  onConfirm,
+}: {
+  language: Language;
+  startDate: string;
+  endDate: string;
+  onConfirm: (startDate: string, endDate: string) => void;
+}) {
+  const today = useMemo(() => startOfDay(new Date()), []);
+  const [start, setStart] = useState<Date | null>(() =>
+    startDate ? new Date(`${startDate}T00:00:00`) : null,
+  );
+  const [end, setEnd] = useState<Date | null>(() =>
+    endDate ? new Date(`${endDate}T00:00:00`) : null,
+  );
+  const [viewMonth, setViewMonth] = useState<Date>(() => {
+    const base = start ?? today;
+    return new Date(base.getFullYear(), base.getMonth(), 1);
+  });
+
+  const monthLabel = new Intl.DateTimeFormat(LOCALE_MAP[language], {
+    year: 'numeric',
+    month: 'long',
+  }).format(viewMonth);
+
+  const weekdayLabels = useMemo(() => {
+    const formatter = new Intl.DateTimeFormat(LOCALE_MAP[language], { weekday: 'short' });
+    // 2024-01-07は日曜日。曜日ラベルを日曜始まりで7日分作る基準日として使う。
+    return Array.from({ length: 7 }, (_, i) => formatter.format(new Date(2024, 0, 7 + i)));
+  }, [language]);
+
+  const cells = useMemo<(Date | null)[]>(() => {
+    const year = viewMonth.getFullYear();
+    const month = viewMonth.getMonth();
+    const leading = new Date(year, month, 1).getDay(); // 0=日曜
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    const result: (Date | null)[] = [];
+    for (let i = 0; i < leading; i += 1) result.push(null);
+    for (let d = 1; d <= daysInMonth; d += 1) result.push(new Date(year, month, d));
+    return result;
+  }, [viewMonth]);
+
+  // 当月より前へは戻れないようにする（過去日は選べないため戻る意味がない）。
+  const canGoPrev =
+    viewMonth.getFullYear() > today.getFullYear() ||
+    (viewMonth.getFullYear() === today.getFullYear() && viewMonth.getMonth() > today.getMonth());
+
+  const goPrev = () => setViewMonth(prev => new Date(prev.getFullYear(), prev.getMonth() - 1, 1));
+  const goNext = () => setViewMonth(prev => new Date(prev.getFullYear(), prev.getMonth() + 1, 1));
+
+  const handlePick = (day: Date) => {
+    // 未選択、または既に範囲が確定済みなら、新しい開始日として選び直す。
+    if (!start || (start && end)) {
+      setStart(day);
+      setEnd(null);
+      return;
+    }
+    // 開始日のみ選択済み：開始より前を押したら開始を入れ替え、後ろなら終了日にする。
+    if (day.getTime() < start.getTime()) {
+      setStart(day);
+    } else {
+      setEnd(day);
+    }
+  };
+
+  const isInRange = (day: Date) =>
+    Boolean(start && end && day.getTime() > start.getTime() && day.getTime() < end.getTime());
+
+  const handleConfirm = () => {
+    if (!start) return;
+    onConfirm(toIsoDate(start), toIsoDate(end ?? start));
+  };
+
+  const selectionLabel = start
+    ? end
+      ? dateRangeDisplay(language, toIsoDate(start), toIsoDate(end))
+      : `${dateRangeDisplay(language, toIsoDate(start), '')}${t(language, 'calendarPickEndSuffix')}`
+    : t(language, 'calendarPickStart');
+
+  return (
+    <div className="calendar">
+      <div className="calendar-header">
+        <button
+          type="button"
+          className="calendar-nav"
+          onClick={goPrev}
+          disabled={!canGoPrev}
+          aria-label={t(language, 'calendarPrevMonth')}
+        >
+          ‹
+        </button>
+        <strong>{monthLabel}</strong>
+        <button
+          type="button"
+          className="calendar-nav"
+          onClick={goNext}
+          aria-label={t(language, 'calendarNextMonth')}
+        >
+          ›
+        </button>
+      </div>
+      <div className="calendar-grid calendar-weekdays" aria-hidden="true">
+        {weekdayLabels.map((label, index) => (
+          <span key={`${label}-${index}`} className="calendar-weekday">
+            {label}
+          </span>
+        ))}
+      </div>
+      <div className="calendar-grid">
+        {cells.map((day, index) => {
+          if (!day) return <span key={`empty-${index}`} className="calendar-day calendar-day--empty" />;
+          const disabled = day.getTime() < today.getTime();
+          const isStart = Boolean(start && isSameDay(day, start));
+          const isEnd = Boolean(end && isSameDay(day, end));
+          const within = isInRange(day);
+          const className = [
+            'calendar-day',
+            disabled ? 'calendar-day--disabled' : '',
+            isStart || isEnd ? 'calendar-day--selected' : '',
+            within ? 'calendar-day--in-range' : '',
+          ]
+            .filter(Boolean)
+            .join(' ');
+          return (
+            <button
+              key={toIsoDate(day)}
+              type="button"
+              className={className}
+              disabled={disabled}
+              onClick={() => handlePick(day)}
+            >
+              {day.getDate()}
+            </button>
+          );
+        })}
+      </div>
+      <p className="calendar-hint">{selectionLabel}</p>
+      <button type="button" className="calendar-confirm" disabled={!start} onClick={handleConfirm}>
+        {t(language, 'calendarConfirm')}
+      </button>
+    </div>
+  );
+}
+
+type DailyWeather = { code: number; tMax: number; tMin: number; pop: number };
+
+// 天気の取得結果キャッシュ（地名|日付 → 天気 or null）。同じ地点・日付の再取得を防ぐ。
+const weatherCache = new Map<string, Promise<DailyWeather | null>>();
+
+// 地名→座標はNominatim（OpenStreetMap）で解決する。Open-Meteo自身のジオコーディングAPIは
+// 日本語の地名（漢字表記）を検索できないため、日本語地名が中心のこのアプリでは使えない。
+// 天気予報そのものは緯度経度さえ分かればよいためOpen-Meteoの予報APIをそのまま使う（APIキー不要）。
+// 予報範囲外の日付や地名不明のときはnull。呼び出し側で「取得できません」を表示する。
+async function fetchDailyWeather(place: string, date: Date): Promise<DailyWeather | null> {
+  const iso = toIsoDate(date);
+  const key = `${place}|${iso}`;
+  const cached = weatherCache.get(key);
+  if (cached) return cached;
+
+  const lookup = (async () => {
+    try {
+      const geoRes = await fetch(
+        `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(place)}&format=json&limit=1`,
+      );
+      if (!geoRes.ok) return null;
+      const geoResults = await geoRes.json();
+      const first = geoResults?.[0];
+      const latitude = Number(first?.lat);
+      const longitude = Number(first?.lon);
+      if (!first || Number.isNaN(latitude) || Number.isNaN(longitude)) return null;
+
+      const url =
+        `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}` +
+        `&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max` +
+        `&timezone=Asia%2FTokyo&start_date=${iso}&end_date=${iso}`;
+      const res = await fetch(url);
+      if (!res.ok) return null;
+      const data = await res.json();
+      const daily = data?.daily;
+      if (!daily || !Array.isArray(daily.time) || daily.time.length === 0) return null;
+
+      const tMax = Number(daily.temperature_2m_max?.[0]);
+      const tMin = Number(daily.temperature_2m_min?.[0]);
+      if (Number.isNaN(tMax) || Number.isNaN(tMin)) return null;
+      const pop = Number(daily.precipitation_probability_max?.[0]);
+      return {
+        code: Number(daily.weather_code?.[0]) || 0,
+        tMax,
+        tMin,
+        pop: Number.isNaN(pop) ? 0 : pop,
+      };
+    } catch {
+      return null;
+    }
+  })();
+
+  weatherCache.set(key, lookup);
+  return lookup;
+}
+
+const WEATHER_CODE_STYLES: { match: (code: number) => boolean; icon: string; key: MessageTextKey }[] = [
+  { match: c => c === 0, icon: '☀️', key: 'weatherClear' },
+  { match: c => c === 1, icon: '🌤️', key: 'weatherMostlyClear' },
+  { match: c => c === 2, icon: '⛅', key: 'weatherPartlyCloudy' },
+  { match: c => c === 3, icon: '☁️', key: 'weatherCloudy' },
+  { match: c => c === 45 || c === 48, icon: '🌫️', key: 'weatherFog' },
+  { match: c => c >= 51 && c <= 57, icon: '🌦️', key: 'weatherDrizzle' },
+  { match: c => c >= 61 && c <= 67, icon: '🌧️', key: 'weatherRain' },
+  { match: c => c >= 71 && c <= 77, icon: '❄️', key: 'weatherSnow' },
+  { match: c => c >= 80 && c <= 82, icon: '🌦️', key: 'weatherRainShowers' },
+  { match: c => c === 85 || c === 86, icon: '🌨️', key: 'weatherSnowShowers' },
+  { match: c => c >= 95, icon: '⛈️', key: 'weatherThunderstorm' },
+];
+
+// WMO天気コードをアイコンとラベルに変換する。該当なしはくもり扱い。
+function describeWeather(language: Language, code: number): { icon: string; label: string } {
+  const style = WEATHER_CODE_STYLES.find(entry => entry.match(code));
+  return {
+    icon: style?.icon ?? '☁️',
+    label: t(language, style?.key ?? 'weatherCloudy'),
+  };
+}
+
+// 選択した日・旅行先の天気カード。予報が取得できたときだけ表示する。
+function WeatherCard({ language, place, date }: { language: Language; place: string; date: Date }) {
+  const [status, setStatus] = useState<'idle' | 'loading' | 'ok' | 'none'>('idle');
+  const [weather, setWeather] = useState<DailyWeather | null>(null);
+
+  useEffect(() => {
+    if (!place) {
+      setStatus('idle');
+      setWeather(null);
+      return;
+    }
+    let cancelled = false;
+    setStatus('loading');
+    setWeather(null);
+    fetchDailyWeather(place, date).then(result => {
+      if (cancelled) return;
+      if (result) {
+        setWeather(result);
+        setStatus('ok');
+      } else {
+        setStatus('none');
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [place, date]);
+
+  const dateLabel = new Intl.DateTimeFormat(LOCALE_MAP[language], {
+    month: 'short',
+    day: 'numeric',
+    weekday: 'short',
+  }).format(date);
+
+  return (
+    <div className="weather-card">
+      <div className="weather-card__head">
+        <strong>
+          {t(language, 'weatherFieldLabel')}
+          {place ? `（${place}）` : ''}
+        </strong>
+        {place && <span className="weather-card__date">{dateLabel}</span>}
+      </div>
+      {!place ? (
+        <p className="weather-card__muted">{t(language, 'weatherPromptSelectDate')}</p>
+      ) : status === 'loading' ? (
+        <p className="weather-card__muted">{t(language, 'weatherLoading')}</p>
+      ) : status === 'ok' && weather ? (
+        <div className="weather-card__body">
+          <div className="weather-card__icon">{describeWeather(language, weather.code).icon}</div>
+          <div className="weather-card__info">
+            <span className="weather-card__label">{describeWeather(language, weather.code).label}</span>
+            <div className="weather-card__meta">
+              <span>
+                {t(language, 'weatherHigh')} {Math.round(weather.tMax)}° / {t(language, 'weatherLow')}{' '}
+                {Math.round(weather.tMin)}°
+              </span>
+              <span>
+                {t(language, 'weatherPrecipitation')} {weather.pop}%
+              </span>
+            </div>
+          </div>
+          <div className="weather-card__temp">
+            {Math.round(weather.tMax)}
+            <span>℃</span>
+          </div>
+        </div>
+      ) : (
+        <p className="weather-card__muted">{t(language, 'weatherUnavailable')}</p>
+      )}
+    </div>
+  );
+}
+
 function buildPlanPrompt(conditions: TravelConditionInput, language: Language, extraRequest?: string) {
   const people = peopleDisplay(language, conditions.people);
   const purposes = joinPurposes(language, conditions.purposes);
@@ -1071,13 +1393,6 @@ function ConditionForm({
     purpose: t(language, 'stepPurpose'),
     ready: t(language, 'stepReady'),
   };
-  const dateLabels: Record<Language, { start: string; end: string }> = {
-    ja: { start: '開始日', end: '終了日' },
-    en: { start: 'Start date', end: 'End date' },
-    de: { start: 'Startdatum', end: 'Enddatum' },
-    zh: { start: '开始日期', end: '结束日期' },
-    ko: { start: '시작일', end: '종료일' },
-  };
   return (
     <div className="condition-card">
       <div className="condition-card__header">
@@ -1148,24 +1463,20 @@ function ConditionForm({
           </label>
         )}
         {intakeStep === 'schedule' && (
-          <div className="date-range-editor">
-            <label>
-              <span>{dateLabels[language].start}</span>
-              <input
-                type="date"
-                value={startDate}
-                onChange={event => onUpdateScheduleDates(event.target.value, endDate)}
+          <div className="calendar-field">
+            <DateRangeCalendar
+              language={language}
+              startDate={startDate}
+              endDate={endDate}
+              onConfirm={(newStart, newEnd) => onUpdateScheduleDates(newStart, newEnd)}
+            />
+            {startDate && (
+              <WeatherCard
+                language={language}
+                place={conditions.destination}
+                date={new Date(`${startDate}T00:00:00`)}
               />
-            </label>
-            <label>
-              <span>{dateLabels[language].end}</span>
-              <input
-                type="date"
-                min={startDate || undefined}
-                value={endDate}
-                onChange={event => onUpdateScheduleDates(startDate, event.target.value)}
-              />
-            </label>
+            )}
           </div>
         )}
         {intakeStep === 'budget' && (
