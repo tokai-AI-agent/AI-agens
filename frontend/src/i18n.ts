@@ -66,6 +66,49 @@ export type Dict = {
   travelNoteDesc: string;
   languageLabel: string;
 
+  topPageEyebrow: string;
+  topPageHeading: string;
+  topPageSubheading: string;
+  topHealthBadge: string;
+  topHealthTitle: string;
+  topHealthDesc: string;
+  topTravelTitle: string;
+  topTravelDesc: string;
+  topSelectButton: string;
+  topBackButton: string;
+  healthPageTitle: string;
+  healthPageDesc: string;
+  healthUploadSectionTitle: string;
+  healthUploadButton: string;
+  healthSupportedFormatsLabel: string;
+  healthNoFileSelected: string;
+  healthSelectedFilePrefix: string;
+  healthAnalyzeButtonIdle: string;
+  healthAnalyzeButtonBusy: string;
+  healthAnalysisResultHeading: string;
+  healthInvalidFileType: string;
+  healthReadErrorPrefix: string;
+  healthAnalyzeErrorPrefix: string;
+  healthTruncatedNotice: string;
+
+  healthResultStepsLabel: string;
+  healthResultStepsUnit: string;
+  healthResultActivityLevelLabel: string;
+  healthResultScoreLabel: string;
+  healthResultScoreUnit: string;
+  healthResultFatigueLabel: string;
+  healthResultRecommendedDistanceLabel: string;
+  healthResultSuitabilityHeading: string;
+  healthResultCityWalk: string;
+  healthResultNatureWalk: string;
+  healthResultThemePark: string;
+  healthResultHotSpring: string;
+  healthResultAiCommentHeading: string;
+  healthLevelLow: string;
+  healthLevelModerate: string;
+  healthLevelHigh: string;
+  healthAnalyzeInvalidResponse: string;
+
   actionSave: string;
   actionShare: string;
   actionMenuAria: string;
@@ -194,6 +237,49 @@ export const DICTIONARIES: Record<Language, Dict> = {
     travelNoteTitle: '素敵な旅を♪',
     travelNoteDesc: '会話しながら無理のない旅程を整えます。',
     languageLabel: '言語',
+
+    topPageEyebrow: 'Travel AI Agent',
+    topPageHeading: '何をしますか？',
+    topPageSubheading: 'やりたいことを選んでください。',
+    topHealthBadge: '優先',
+    topHealthTitle: '健康分析',
+    topHealthDesc: '旅の前後の体調をAIが分析し、無理のない旅をサポートします。',
+    topTravelTitle: '旅行の提案',
+    topTravelDesc: 'AIとの会話で、あなたにぴったりの旅行プランを提案します。',
+    topSelectButton: '選択する',
+    topBackButton: 'トップへ戻る',
+    healthPageTitle: '健康分析',
+    healthPageDesc: 'Apple Watchからエクスポートした活動データを分析します。',
+    healthUploadSectionTitle: 'ファイルをアップロード',
+    healthUploadButton: 'JSON/CSVを選択',
+    healthSupportedFormatsLabel: '対応形式',
+    healthNoFileSelected: 'ファイルが選択されていません',
+    healthSelectedFilePrefix: '選択中のファイル: ',
+    healthAnalyzeButtonIdle: 'AIで健康分析',
+    healthAnalyzeButtonBusy: 'AIが分析中...',
+    healthAnalysisResultHeading: '分析結果',
+    healthInvalidFileType: 'JSONまたはCSV形式のファイルを選択してください。',
+    healthReadErrorPrefix: 'ファイルの読み込みに失敗しました: ',
+    healthAnalyzeErrorPrefix: '健康分析に失敗しました: ',
+    healthTruncatedNotice: '（ファイルが大きいため、一部のデータのみを分析対象にしています）',
+
+    healthResultStepsLabel: '歩数',
+    healthResultStepsUnit: '歩',
+    healthResultActivityLevelLabel: '活動レベル',
+    healthResultScoreLabel: '健康スコア',
+    healthResultScoreUnit: '点',
+    healthResultFatigueLabel: '疲労度',
+    healthResultRecommendedDistanceLabel: '推奨歩行距離',
+    healthResultSuitabilityHeading: '旅行適性',
+    healthResultCityWalk: '街歩き',
+    healthResultNatureWalk: '自然散策',
+    healthResultThemePark: 'テーマパーク',
+    healthResultHotSpring: '温泉',
+    healthResultAiCommentHeading: 'AIコメント',
+    healthLevelLow: '低',
+    healthLevelModerate: '中',
+    healthLevelHigh: '高',
+    healthAnalyzeInvalidResponse: 'AIからの応答を解析できませんでした。もう一度お試しください。',
 
     actionSave: 'プランを保存',
     actionShare: '共有する',
@@ -332,6 +418,49 @@ export const DICTIONARIES: Record<Language, Dict> = {
     travelNoteDesc: 'We build a comfortable itinerary together through conversation.',
     languageLabel: 'Language',
 
+    topPageEyebrow: 'Travel AI Agent',
+    topPageHeading: 'What would you like to do?',
+    topPageSubheading: 'Choose what you would like to do.',
+    topHealthBadge: 'Priority',
+    topHealthTitle: 'Health Analysis',
+    topHealthDesc: 'AI analyzes your health condition before and after your trip to support a comfortable journey.',
+    topTravelTitle: 'Travel Proposal',
+    topTravelDesc: 'Chat with the AI to get a travel plan tailored just for you.',
+    topSelectButton: 'Select',
+    topBackButton: 'Back to top',
+    healthPageTitle: 'Health Analysis',
+    healthPageDesc: 'Analyze activity data exported from your Apple Watch.',
+    healthUploadSectionTitle: 'Upload a file',
+    healthUploadButton: 'Choose JSON/CSV',
+    healthSupportedFormatsLabel: 'Supported formats',
+    healthNoFileSelected: 'No file selected',
+    healthSelectedFilePrefix: 'Selected file: ',
+    healthAnalyzeButtonIdle: 'Analyze with AI',
+    healthAnalyzeButtonBusy: 'AI is analyzing...',
+    healthAnalysisResultHeading: 'Analysis result',
+    healthInvalidFileType: 'Please choose a JSON or CSV file.',
+    healthReadErrorPrefix: 'Failed to read the file: ',
+    healthAnalyzeErrorPrefix: 'Failed to analyze the data: ',
+    healthTruncatedNotice: '(The file is large, so only part of the data was analyzed.)',
+
+    healthResultStepsLabel: 'Steps',
+    healthResultStepsUnit: ' steps',
+    healthResultActivityLevelLabel: 'Activity level',
+    healthResultScoreLabel: 'Health score',
+    healthResultScoreUnit: ' pts',
+    healthResultFatigueLabel: 'Fatigue level',
+    healthResultRecommendedDistanceLabel: 'Recommended walking distance',
+    healthResultSuitabilityHeading: 'Travel suitability',
+    healthResultCityWalk: 'City walking',
+    healthResultNatureWalk: 'Nature walks',
+    healthResultThemePark: 'Theme parks',
+    healthResultHotSpring: 'Hot springs',
+    healthResultAiCommentHeading: 'AI comment',
+    healthLevelLow: 'Low',
+    healthLevelModerate: 'Moderate',
+    healthLevelHigh: 'High',
+    healthAnalyzeInvalidResponse: 'Could not parse the AI response. Please try again.',
+
     actionSave: 'Save Plan',
     actionShare: 'Share',
     actionMenuAria: 'Menu',
@@ -468,6 +597,49 @@ export const DICTIONARIES: Record<Language, Dict> = {
     travelNoteTitle: 'Gute Reise!',
     travelNoteDesc: 'Wir erstellen gemeinsam im Gespräch einen entspannten Reiseplan.',
     languageLabel: 'Sprache',
+
+    topPageEyebrow: 'Travel AI Agent',
+    topPageHeading: 'Was möchtest du tun?',
+    topPageSubheading: 'Wähle aus, was du tun möchtest.',
+    topHealthBadge: 'Priorität',
+    topHealthTitle: 'Gesundheitsanalyse',
+    topHealthDesc: 'Die KI analysiert deinen Gesundheitszustand vor und nach der Reise, um eine angenehme Reise zu unterstützen.',
+    topTravelTitle: 'Reisevorschlag',
+    topTravelDesc: 'Chatte mit der KI, um einen auf dich zugeschnittenen Reiseplan zu erhalten.',
+    topSelectButton: 'Auswählen',
+    topBackButton: 'Zurück zur Startseite',
+    healthPageTitle: 'Gesundheitsanalyse',
+    healthPageDesc: 'Analysiere Aktivitätsdaten, die von deiner Apple Watch exportiert wurden.',
+    healthUploadSectionTitle: 'Datei hochladen',
+    healthUploadButton: 'JSON/CSV auswählen',
+    healthSupportedFormatsLabel: 'Unterstützte Formate',
+    healthNoFileSelected: 'Keine Datei ausgewählt',
+    healthSelectedFilePrefix: 'Ausgewählte Datei: ',
+    healthAnalyzeButtonIdle: 'Mit KI analysieren',
+    healthAnalyzeButtonBusy: 'KI analysiert...',
+    healthAnalysisResultHeading: 'Analyseergebnis',
+    healthInvalidFileType: 'Bitte wähle eine JSON- oder CSV-Datei aus.',
+    healthReadErrorPrefix: 'Die Datei konnte nicht gelesen werden: ',
+    healthAnalyzeErrorPrefix: 'Die Analyse ist fehlgeschlagen: ',
+    healthTruncatedNotice: '(Die Datei ist groß, daher wurde nur ein Teil der Daten analysiert.)',
+
+    healthResultStepsLabel: 'Schritte',
+    healthResultStepsUnit: ' Schritte',
+    healthResultActivityLevelLabel: 'Aktivitätsniveau',
+    healthResultScoreLabel: 'Gesundheitswert',
+    healthResultScoreUnit: ' Pkt.',
+    healthResultFatigueLabel: 'Erschöpfungsgrad',
+    healthResultRecommendedDistanceLabel: 'Empfohlene Gehstrecke',
+    healthResultSuitabilityHeading: 'Reiseeignung',
+    healthResultCityWalk: 'Stadtspaziergänge',
+    healthResultNatureWalk: 'Naturwanderungen',
+    healthResultThemePark: 'Freizeitparks',
+    healthResultHotSpring: 'Thermalbäder',
+    healthResultAiCommentHeading: 'KI-Kommentar',
+    healthLevelLow: 'Niedrig',
+    healthLevelModerate: 'Mittel',
+    healthLevelHigh: 'Hoch',
+    healthAnalyzeInvalidResponse: 'Die KI-Antwort konnte nicht verarbeitet werden. Bitte versuche es erneut.',
 
     actionSave: 'Plan speichern',
     actionShare: 'Teilen',
@@ -606,6 +778,49 @@ export const DICTIONARIES: Record<Language, Dict> = {
     travelNoteDesc: '我们通过对话为您安排轻松的行程。',
     languageLabel: '语言',
 
+    topPageEyebrow: 'Travel AI Agent',
+    topPageHeading: '您想做什么？',
+    topPageSubheading: '请选择您想进行的操作。',
+    topHealthBadge: '优先',
+    topHealthTitle: '健康分析',
+    topHealthDesc: 'AI 会分析您旅行前后的身体状况，帮助您轻松出行。',
+    topTravelTitle: '旅行提案',
+    topTravelDesc: '通过与 AI 对话，为您量身定制专属旅行计划。',
+    topSelectButton: '选择',
+    topBackButton: '返回首页',
+    healthPageTitle: '健康分析',
+    healthPageDesc: '分析从 Apple Watch 导出的活动数据。',
+    healthUploadSectionTitle: '上传文件',
+    healthUploadButton: '选择 JSON/CSV',
+    healthSupportedFormatsLabel: '支持的格式',
+    healthNoFileSelected: '未选择文件',
+    healthSelectedFilePrefix: '已选择文件：',
+    healthAnalyzeButtonIdle: '使用 AI 分析',
+    healthAnalyzeButtonBusy: 'AI 正在分析…',
+    healthAnalysisResultHeading: '分析结果',
+    healthInvalidFileType: '请选择 JSON 或 CSV 格式的文件。',
+    healthReadErrorPrefix: '文件读取失败：',
+    healthAnalyzeErrorPrefix: '健康分析失败：',
+    healthTruncatedNotice: '（文件较大，仅分析部分数据）',
+
+    healthResultStepsLabel: '步数',
+    healthResultStepsUnit: '步',
+    healthResultActivityLevelLabel: '活动水平',
+    healthResultScoreLabel: '健康评分',
+    healthResultScoreUnit: '分',
+    healthResultFatigueLabel: '疲劳度',
+    healthResultRecommendedDistanceLabel: '建议步行距离',
+    healthResultSuitabilityHeading: '旅行适应性',
+    healthResultCityWalk: '城市漫步',
+    healthResultNatureWalk: '自然徒步',
+    healthResultThemePark: '主题乐园',
+    healthResultHotSpring: '温泉',
+    healthResultAiCommentHeading: 'AI 点评',
+    healthLevelLow: '低',
+    healthLevelModerate: '中',
+    healthLevelHigh: '高',
+    healthAnalyzeInvalidResponse: '无法解析 AI 的响应，请重试。',
+
     actionSave: '保存计划',
     actionShare: '分享',
     actionMenuAria: '菜单',
@@ -742,6 +957,49 @@ export const DICTIONARIES: Record<Language, Dict> = {
     travelNoteTitle: '즐거운 여행 되세요♪',
     travelNoteDesc: '대화를 통해 무리 없는 일정을 함께 만들어 드립니다.',
     languageLabel: '언어',
+
+    topPageEyebrow: 'Travel AI Agent',
+    topPageHeading: '무엇을 하시겠어요?',
+    topPageSubheading: '하고 싶은 것을 선택해 주세요.',
+    topHealthBadge: '우선',
+    topHealthTitle: '건강 분석',
+    topHealthDesc: 'AI가 여행 전후의 건강 상태를 분석하여 무리 없는 여행을 도와드립니다.',
+    topTravelTitle: '여행 제안',
+    topTravelDesc: 'AI와의 대화를 통해 당신에게 꼭 맞는 여행 계획을 제안합니다.',
+    topSelectButton: '선택하기',
+    topBackButton: '처음으로 돌아가기',
+    healthPageTitle: '건강 분석',
+    healthPageDesc: 'Apple Watch에서 내보낸 활동 데이터를 분석합니다.',
+    healthUploadSectionTitle: '파일 업로드',
+    healthUploadButton: 'JSON/CSV 선택',
+    healthSupportedFormatsLabel: '지원 형식',
+    healthNoFileSelected: '선택된 파일이 없습니다',
+    healthSelectedFilePrefix: '선택한 파일: ',
+    healthAnalyzeButtonIdle: 'AI로 건강 분석',
+    healthAnalyzeButtonBusy: 'AI가 분석 중입니다...',
+    healthAnalysisResultHeading: '분석 결과',
+    healthInvalidFileType: 'JSON 또는 CSV 형식의 파일을 선택해 주세요.',
+    healthReadErrorPrefix: '파일을 읽지 못했습니다: ',
+    healthAnalyzeErrorPrefix: '건강 분석에 실패했습니다: ',
+    healthTruncatedNotice: '(파일이 커서 일부 데이터만 분석했습니다)',
+
+    healthResultStepsLabel: '걸음 수',
+    healthResultStepsUnit: '보',
+    healthResultActivityLevelLabel: '활동 수준',
+    healthResultScoreLabel: '건강 점수',
+    healthResultScoreUnit: '점',
+    healthResultFatigueLabel: '피로도',
+    healthResultRecommendedDistanceLabel: '권장 보행 거리',
+    healthResultSuitabilityHeading: '여행 적합도',
+    healthResultCityWalk: '도심 산책',
+    healthResultNatureWalk: '자연 산책',
+    healthResultThemePark: '테마파크',
+    healthResultHotSpring: '온천',
+    healthResultAiCommentHeading: 'AI 코멘트',
+    healthLevelLow: '낮음',
+    healthLevelModerate: '보통',
+    healthLevelHigh: '높음',
+    healthAnalyzeInvalidResponse: 'AI 응답을 해석할 수 없습니다. 다시 시도해 주세요.',
 
     actionSave: '계획 저장',
     actionShare: '공유하기',

@@ -6,6 +6,7 @@ import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png';
 import markerIcon from 'leaflet/dist/images/marker-icon.png';
 import markerShadow from 'leaflet/dist/images/marker-shadow.png';
 import './App.css';
+import HealthAnalysisPage from './HealthAnalysisPage';
 import {
   AGENT_LANGUAGE_LABEL,
   LANGUAGES,
@@ -69,6 +70,7 @@ type TravelConditionInput = {
 
 type PlanTab = 'schedule' | 'map' | 'tips';
 type MobileTab = 'chat' | 'plan' | 'map';
+type AppView = 'top' | 'travel' | 'health';
 
 const initialConditions: TravelConditionInput = {
   destination: '',
@@ -316,6 +318,7 @@ function createPlanId(): string {
 }
 
 export default function App() {
+  const [view, setView] = useState<AppView>('top');
   const [language, setLanguage] = useState<Language>(() => loadLanguage());
   const [conditions, setConditions] = useState<TravelConditionInput>(initialConditions);
   const [intakeStep, setIntakeStep] = useState<IntakeStep>('destination');
@@ -579,6 +582,20 @@ export default function App() {
     appendMessage('ai', t(language, 'intakeReadyPrompt'), 'intakeReadyPrompt');
   };
 
+  if (view === 'top') {
+    return (
+      <TopPage
+        language={language}
+        onSelectTravel={() => setView('travel')}
+        onSelectHealth={() => setView('health')}
+      />
+    );
+  }
+
+  if (view === 'health') {
+    return <HealthAnalysisPage language={language} onBack={() => setView('top')} />;
+  }
+
   return (
     <div className="travel-app">
       <Sidebar
@@ -587,6 +604,7 @@ export default function App() {
         savedCount={savedPlans.length}
         onOpenSaved={() => setIsSavedOpen(true)}
         onNewChat={startNewChat}
+        onBackHome={() => setView('top')}
       />
       <div className="workspace">
         <Header language={language} planGenerated={planGenerated} onSavePlan={handleSavePlan} />
@@ -647,6 +665,41 @@ export default function App() {
           onDelete={handleDeletePlan}
         />
       )}
+    </div>
+  );
+}
+
+function TopPage({
+  language,
+  onSelectTravel,
+  onSelectHealth,
+}: {
+  language: Language;
+  onSelectTravel: () => void;
+  onSelectHealth: () => void;
+}) {
+  return (
+    <div className="top-page">
+      <div className="top-page-card">
+        <p className="eyebrow">{t(language, 'topPageEyebrow')}</p>
+        <h1>{t(language, 'topPageHeading')}</h1>
+        <p className="top-page-subheading">{t(language, 'topPageSubheading')}</p>
+        <div className="top-page-options">
+          <button className="top-option" type="button" onClick={onSelectHealth}>
+            <span className="top-option-badge">{t(language, 'topHealthBadge')}</span>
+            <span className="top-option-icon" aria-hidden="true">🩺</span>
+            <h2>{t(language, 'topHealthTitle')}</h2>
+            <p>{t(language, 'topHealthDesc')}</p>
+            <span className="top-option-button">{t(language, 'topSelectButton')}</span>
+          </button>
+          <button className="top-option" type="button" onClick={onSelectTravel}>
+            <span className="top-option-icon" aria-hidden="true">✈</span>
+            <h2>{t(language, 'topTravelTitle')}</h2>
+            <p>{t(language, 'topTravelDesc')}</p>
+            <span className="top-option-button">{t(language, 'topSelectButton')}</span>
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
@@ -731,12 +784,14 @@ function Sidebar({
   savedCount,
   onOpenSaved,
   onNewChat,
+  onBackHome,
 }: {
   language: Language;
   onLanguageChange: (language: Language) => void;
   savedCount: number;
   onOpenSaved: () => void;
   onNewChat: () => void;
+  onBackHome: () => void;
 }) {
   const items: [string, string][] = [
     [t(language, 'navChat'), '💬'],
@@ -749,13 +804,13 @@ function Sidebar({
 
   return (
     <aside className="side-nav">
-      <div className="brand">
+      <button className="brand brand--button" type="button" onClick={onBackHome} aria-label={t(language, 'topBackButton')}>
         <div className="brand-mark">✈</div>
         <div>
           <strong>{t(language, 'brandName')}</strong>
           <span>{t(language, 'brandTagline')}</span>
         </div>
-      </div>
+      </button>
       <LanguageSelector language={language} onLanguageChange={onLanguageChange} />
       <nav className="nav-list" aria-label="Main navigation">
         {items.map(([label, icon]) => {
