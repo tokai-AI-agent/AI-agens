@@ -153,6 +153,13 @@ function isSameDay(a: Date, b: Date): boolean {
   );
 }
 
+// 日曜始まりの曜日短縮ラベルを言語に応じて7日分作る（カレンダー系コンポーネントで共通利用）。
+function getWeekdayLabels(language: Language): string[] {
+  const formatter = new Intl.DateTimeFormat(LOCALE_MAP[language], { weekday: 'short' });
+  // 2024-01-07は日曜日。曜日ラベルを日曜始まりで7日分作る基準日として使う。
+  return Array.from({ length: 7 }, (_, i) => formatter.format(new Date(2024, 0, 7 + i)));
+}
+
 // 日程入力用のカレンダー（範囲選択）。1回目のクリックで開始日、2回目で終了日を決める。
 // 過去日は選べないようにし、「決定」を押すと開始日・終了日をISO形式で親へ渡す。外部ライブラリは使わない。
 function DateRangeCalendar({
@@ -183,11 +190,7 @@ function DateRangeCalendar({
     month: 'long',
   }).format(viewMonth);
 
-  const weekdayLabels = useMemo(() => {
-    const formatter = new Intl.DateTimeFormat(LOCALE_MAP[language], { weekday: 'short' });
-    // 2024-01-07は日曜日。曜日ラベルを日曜始まりで7日分作る基準日として使う。
-    return Array.from({ length: 7 }, (_, i) => formatter.format(new Date(2024, 0, 7 + i)));
-  }, [language]);
+  const weekdayLabels = useMemo(() => getWeekdayLabels(language), [language]);
 
   const cells = useMemo<(Date | null)[]>(() => {
     const year = viewMonth.getFullYear();
@@ -570,6 +573,10 @@ type SavedPlan = {
   planText: string;
   conditions: TravelConditionInput;
   savedAt: string;
+  // カレンダー機能で旅行日程をプロットするための開始日・終了日（ISO形式）。
+  // カレンダーの日程選択を使わずに保存されたプラン（自由入力の日程など）では空文字になりうる。
+  scheduleStartDate?: string;
+  scheduleEndDate?: string;
 };
 
 // localStorageのキー。アプリ固有の接頭辞を付けて他データと衝突しないようにする。
@@ -639,6 +646,372 @@ function createPlanId(): string {
   return `${Date.now()}-${Math.random().toString(16).slice(2)}`;
 }
 
+// ============================================================================
+// 旅行カレンダー：保存済みプランを日付ごとにカレンダー上へ表示する機能。
+// ============================================================================
+
+type TripKind = 'day' | 'stay';
+
+// 泊数から旅行の種別を判定する（日帰り / 宿泊あり）。
+function tripKind(start: Date, end: Date): TripKind {
+  const nights = Math.round((startOfDay(end).getTime() - startOfDay(start).getTime()) / 86_400_000);
+  return nights <= 0 ? 'day' : 'stay';
+}
+
+type CalendarTrip = {
+  plan: SavedPlan;
+  start: Date;
+  end: Date;
+  kind: TripKind;
+  days: number;
+  nights: number;
+};
+
+// 保存プランのうち、カレンダーの日程選択で開始日が記録されているものだけを
+// カレンダー用の旅行データへ変換する（自由入力の日程はプロットできないため除外する）。
+function buildCalendarTrips(plans: SavedPlan[]): CalendarTrip[] {
+  const trips: CalendarTrip[] = [];
+  for (const plan of plans) {
+    if (!plan.scheduleStartDate) continue;
+    const start = startOfDay(new Date(`${plan.scheduleStartDate}T00:00:00`));
+    const end = startOfDay(new Date(`${plan.scheduleEndDate || plan.scheduleStartDate}T00:00:00`));
+    if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) continue;
+    const [rangeStart, rangeEnd] = end.getTime() < start.getTime() ? [end, start] : [start, end];
+    const nights = Math.round((rangeEnd.getTime() - rangeStart.getTime()) / 86_400_000);
+    trips.push({
+      plan,
+      start: rangeStart,
+      end: rangeEnd,
+      kind: tripKind(rangeStart, rangeEnd),
+      days: nights + 1,
+      nights,
+    });
+  }
+  return trips;
+}
+
+// 指定日がその旅行の期間（開始日〜終了日、両端含む）に入っているか。
+function tripCoversDay(trip: CalendarTrip, day: Date): boolean {
+  const time = startOfDay(day).getTime();
+  return time >= trip.start.getTime() && time <= trip.end.getTime();
+}
+
+// 出発までの残り日数ラベル（旅行中・終了も表現する）。
+function countdownLabel(trip: CalendarTrip, today: Date, language: Language): string {
+  const startDiff = Math.round((trip.start.getTime() - today.getTime()) / 86_400_000);
+  const endDiff = Math.round((trip.end.getTime() - today.getTime()) / 86_400_000);
+  if (startDiff > 0) {
+    if (language === 'ja') return `あと${startDiff}日`;
+    if (language === 'zh') return `还有${startDiff}天`;
+    if (language === 'ko') return `${startDiff}일 후`;
+    if (language === 'de') return `in ${startDiff} Tag${startDiff === 1 ? '' : 'en'}`;
+    return `in ${startDiff} day${startDiff === 1 ? '' : 's'}`;
+  }
+  if (endDiff >= 0) return t(language, 'calendarOngoing');
+  return t(language, 'calendarFinished');
+}
+
+// プラン本文から概要にあたる最初の説明文を1つ取り出す（見出し・箇条書き・時刻行・画像は除く）。
+function extractPlanOverview(planText: string): string {
+  const lines = planText
+    .replace(/^```markdown\s*/i, '')
+    .replace(/```$/i, '')
+    .split('\n');
+  for (const raw of lines) {
+    const line = raw.trim();
+    if (!line) continue;
+    if (line.startsWith('#') || line.startsWith('-') || line.startsWith('!')) continue;
+    if (/^\d+\.\s/.test(line)) continue;
+    if (/^\d{1,2}:\d{2}/.test(line)) continue;
+    if (line.length < 8) continue;
+    return line.length > 120 ? `${line.slice(0, 120)}…` : line;
+  }
+  return '';
+}
+
+// 旅行カレンダー本体。保存プランを月カレンダー上に表示し、近日の旅行・選択日の予定・天気を並べる。
+function CalendarView({
+  language,
+  plans,
+  defaultPlace,
+  onClose,
+  onOpenPlan,
+}: {
+  language: Language;
+  plans: SavedPlan[];
+  defaultPlace: string;
+  onClose: () => void;
+  onOpenPlan: (plan: SavedPlan) => void;
+}) {
+  const today = useMemo(() => startOfDay(new Date()), []);
+  const trips = useMemo(() => buildCalendarTrips(plans), [plans]);
+  const weekdayLabels = useMemo(() => getWeekdayLabels(language), [language]);
+
+  // 未来（当日含む）の旅行を近い順に並べる。近日リストと初期表示月の決定に使う。
+  const upcomingTrips = useMemo(
+    () =>
+      [...trips]
+        .filter(trip => trip.end.getTime() >= today.getTime())
+        .sort((a, b) => a.start.getTime() - b.start.getTime()),
+    [trips, today],
+  );
+  const firstUpcoming = upcomingTrips[0];
+
+  // 初期表示は直近の旅行がある月、なければ今月。選択日も同様に初期化する。
+  const [viewMonth, setViewMonth] = useState<Date>(() => {
+    const base = firstUpcoming ? firstUpcoming.start : today;
+    return new Date(base.getFullYear(), base.getMonth(), 1);
+  });
+  const [selectedDay, setSelectedDay] = useState<Date>(() =>
+    firstUpcoming ? firstUpcoming.start : today,
+  );
+
+  const monthLabel = new Intl.DateTimeFormat(LOCALE_MAP[language], {
+    year: 'numeric',
+    month: 'long',
+  }).format(viewMonth);
+
+  // 表示月を含む6週間（42日）分のセルを、前後の月にはみ出した日も含めて組み立てる。
+  const days = useMemo(() => {
+    const year = viewMonth.getFullYear();
+    const month = viewMonth.getMonth();
+    const gridStart = new Date(year, month, 1 - new Date(year, month, 1).getDay());
+    const result: Date[] = [];
+    for (let i = 0; i < 42; i += 1) {
+      result.push(new Date(gridStart.getFullYear(), gridStart.getMonth(), gridStart.getDate() + i));
+    }
+    return result;
+  }, [viewMonth]);
+
+  const selectedTrips = useMemo(
+    () => trips.filter(trip => tripCoversDay(trip, selectedDay)),
+    [trips, selectedDay],
+  );
+
+  const goPrev = () => setViewMonth(prev => new Date(prev.getFullYear(), prev.getMonth() - 1, 1));
+  const goNext = () => setViewMonth(prev => new Date(prev.getFullYear(), prev.getMonth() + 1, 1));
+  const goToday = () => {
+    setViewMonth(new Date(today.getFullYear(), today.getMonth(), 1));
+    setSelectedDay(today);
+  };
+  // 近日リストから旅行を選ぶと、その開始日を選択日にしてその月へ移動する。
+  const selectTrip = (trip: CalendarTrip) => {
+    setSelectedDay(trip.start);
+    setViewMonth(new Date(trip.start.getFullYear(), trip.start.getMonth(), 1));
+  };
+
+  // 選択した日に旅行が無くても天気は表示したいので、その日の旅行先→直近の予定の旅行先→
+  // 現在チャットで入力中の目的地、の順にフォールバックする。
+  const weatherPlace =
+    selectedTrips[0]?.plan.conditions.destination || firstUpcoming?.plan.conditions.destination || defaultPlace;
+
+  return (
+    <div
+      className="calv-overlay"
+      role="dialog"
+      aria-modal="true"
+      aria-label={t(language, 'calendarViewTitle')}
+      onClick={onClose}
+    >
+      <div className="calv-panel" onClick={event => event.stopPropagation()}>
+        <div className="calv-topbar">
+          <div className="calv-topbar__title">
+            <span className="calv-topbar__icon">📅</span>
+            <div>
+              <h2>{t(language, 'calendarViewTitle')}</h2>
+              <p>{t(language, 'calendarViewSubtitle')}</p>
+            </div>
+          </div>
+          <button className="calv-close" type="button" aria-label={t(language, 'modalCloseAria')} onClick={onClose}>
+            ×
+          </button>
+        </div>
+
+        <div className="calv-body">
+          <section className="calv-calendar">
+            <div className="calv-calendar__head">
+              <button className="calv-nav" type="button" onClick={goPrev} aria-label={t(language, 'calendarPrevMonth')}>
+                ‹
+              </button>
+              <strong>{monthLabel}</strong>
+              <button className="calv-nav" type="button" onClick={goNext} aria-label={t(language, 'calendarNextMonth')}>
+                ›
+              </button>
+              <button className="calv-today" type="button" onClick={goToday}>
+                {t(language, 'calendarTodayButton')}
+              </button>
+            </div>
+            <div className="calv-weekrow">
+              {weekdayLabels.map((label, index) => (
+                <span
+                  key={`${label}-${index}`}
+                  className={`calv-weekday ${index === 0 ? 'calv-weekday--sun' : ''} ${
+                    index === 6 ? 'calv-weekday--sat' : ''
+                  }`}
+                >
+                  {label}
+                </span>
+              ))}
+            </div>
+            <div className="calv-grid">
+              {days.map(day => {
+                const inMonth = day.getMonth() === viewMonth.getMonth();
+                const dayTrips = trips.filter(trip => tripCoversDay(trip, day));
+                const isToday = isSameDay(day, today);
+                const isSelected = isSameDay(day, selectedDay);
+                const dow = day.getDay();
+                const dayLabel = day.getDate() === 1 && !inMonth ? `${day.getMonth() + 1}/1` : `${day.getDate()}`;
+                const cellClass = [
+                  'calv-cell',
+                  inMonth ? '' : 'calv-cell--muted',
+                  isSelected ? 'calv-cell--selected' : '',
+                  isToday ? 'calv-cell--today' : '',
+                ]
+                  .filter(Boolean)
+                  .join(' ');
+                return (
+                  <button
+                    type="button"
+                    key={toIsoDate(day)}
+                    className={cellClass}
+                    onClick={() => setSelectedDay(startOfDay(day))}
+                  >
+                    <span
+                      className={`calv-date ${dow === 0 ? 'calv-date--sun' : ''} ${dow === 6 ? 'calv-date--sat' : ''}`}
+                    >
+                      {dayLabel}
+                    </span>
+                    <span className="calv-pills">
+                      {dayTrips.slice(0, 2).map(trip => {
+                        const isStart = isSameDay(day, trip.start);
+                        const isEnd = isSameDay(day, trip.end);
+                        // 帯の端を丸めて内側に収める位置＝旅行の開始/終了日、または週の端（日曜/土曜）。
+                        // それ以外の途中日は左右にはみ出させ、隣の日と帯を1本につなげる。
+                        const capLeft = isStart || dow === 0;
+                        const capRight = isEnd || dow === 6;
+                        // タイトルは開始日と週頭にだけ出す。開始日には日程表記（dateRangeDisplay）も添える。
+                        const pillLabel = isStart
+                          ? trip.nights > 0
+                            ? `${trip.plan.title} ${dateRangeDisplay(language, toIsoDate(trip.start), toIsoDate(trip.end))}`
+                            : trip.plan.title
+                          : dow === 0
+                            ? trip.plan.title
+                            : ' ';
+                        return (
+                          <span
+                            key={trip.plan.id}
+                            className={`calv-pill ${trip.kind === 'stay' ? 'calv-kind--stay' : 'calv-kind--day'} ${
+                              capLeft ? 'calv-pill--start' : ''
+                            } ${capRight ? 'calv-pill--end' : ''}`}
+                            title={`${trip.plan.title}（${dateRangeDisplay(language, toIsoDate(trip.start), toIsoDate(trip.end))}）`}
+                          >
+                            {pillLabel}
+                          </span>
+                        );
+                      })}
+                      {dayTrips.length > 2 && <span className="calv-more">+{dayTrips.length - 2}</span>}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+            <div className="calv-legend">
+              <span>
+                <i className="calv-dot calv-kind--stay" />
+                {t(language, 'calendarLegendStay')}
+              </span>
+              <span>
+                <i className="calv-dot calv-kind--day" />
+                {t(language, 'calendarLegendDay')}
+              </span>
+            </div>
+          </section>
+
+          <aside className="calv-aside">
+            <div className="weather-card">
+              <div className="weather-card__head">
+                <strong>{t(language, 'calendarUpcomingTitle')}</strong>
+              </div>
+              {upcomingTrips.length === 0 ? (
+                <p className="weather-card__muted">{t(language, 'calendarUpcomingEmpty')}</p>
+              ) : (
+                <ul className="calv-upcoming">
+                  {upcomingTrips.slice(0, 3).map(trip => (
+                    <li key={trip.plan.id} className="calv-upcoming__item">
+                      <button type="button" className="calv-upcoming__main" onClick={() => selectTrip(trip)}>
+                        <span className={`calv-tag ${trip.kind === 'stay' ? 'calv-kind--stay' : 'calv-kind--day'}`}>
+                          {dateRangeDisplay(language, toIsoDate(trip.start), toIsoDate(trip.end))}
+                        </span>
+                        <strong>{trip.plan.title}</strong>
+                        <span className="calv-countdown">{countdownLabel(trip, today, language)}</span>
+                      </button>
+                      <button type="button" className="calv-openplan" onClick={() => onOpenPlan(trip.plan)}>
+                        {t(language, 'calendarOpenPlan')}
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+
+            <div className="weather-card">
+              <div className="weather-card__head">
+                <strong>{t(language, 'calendarSelectedTitle')}</strong>
+                <span className="weather-card__date">
+                  {new Intl.DateTimeFormat(LOCALE_MAP[language], { month: 'short', day: 'numeric', weekday: 'short' }).format(
+                    selectedDay,
+                  )}
+                </span>
+              </div>
+              {selectedTrips.length === 0 ? (
+                <p className="weather-card__muted">{t(language, 'calendarSelectedEmpty')}</p>
+              ) : (
+                selectedTrips.map(trip => {
+                  const overview = extractPlanOverview(trip.plan.planText);
+                  return (
+                    <div key={trip.plan.id} className="calv-selected">
+                      <div className="calv-selected__head">
+                        <strong>{trip.plan.title}</strong>
+                        <span className={`calv-tag ${trip.kind === 'stay' ? 'calv-kind--stay' : 'calv-kind--day'}`}>
+                          {dateRangeDisplay(language, toIsoDate(trip.start), toIsoDate(trip.end))}
+                        </span>
+                      </div>
+                      <dl className="calv-selected__meta">
+                        <div>
+                          <dt>{t(language, 'stepDestination')}</dt>
+                          <dd>{trip.plan.conditions.destination || t(language, 'unspecified')}</dd>
+                        </div>
+                        <div>
+                          <dt>{t(language, 'stepBudget')}</dt>
+                          <dd>{trip.plan.conditions.budget || t(language, 'unspecified')}</dd>
+                        </div>
+                        <div>
+                          <dt>{t(language, 'stepPurpose')}</dt>
+                          <dd>{joinPurposes(language, trip.plan.conditions.purposes) || t(language, 'unspecified')}</dd>
+                        </div>
+                      </dl>
+                      {overview && <p className="calv-selected__overview">{overview}</p>}
+                      <button
+                        type="button"
+                        className="calv-openplan calv-openplan--full"
+                        onClick={() => onOpenPlan(trip.plan)}
+                      >
+                        {t(language, 'calendarOpenPlan')}
+                      </button>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+
+            <WeatherCard language={language} place={weatherPlace} date={selectedDay} />
+          </aside>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function App() {
   const [view, setView] = useState<AppView>('top');
   const [language, setLanguage] = useState<Language>(() => loadLanguage());
@@ -666,6 +1039,7 @@ export default function App() {
   // 保存済みプランは初回レンダー時にlocalStorageから一度だけ読み込む（遅延初期化）。
   const [savedPlans, setSavedPlans] = useState<SavedPlan[]>(() => loadSavedPlans());
   const [isSavedOpen, setIsSavedOpen] = useState(false);
+  const [isCalendarOpen, setIsCalendarOpen] = useState(false);
 
   // savedPlansが変わるたびにlocalStorageへ同期する。
   // stateを唯一の正としておけば、保存/削除のたびに個別に書き込む必要がなく整合性が崩れない。
@@ -737,10 +1111,36 @@ export default function App() {
       // 復元時に条件チップ等も再現できるよう、入力条件のスナップショットを一緒に保存する。
       conditions,
       savedAt: new Date().toISOString(),
+      scheduleStartDate,
+      scheduleEndDate,
     };
     // 新しいものを先頭に積む（最近保存した順で一覧表示するため）。
     setSavedPlans(prev => [newPlan, ...prev]);
     appendMessage('ai', `${t(language, 'savedMessagePrefix')}${title}${t(language, 'savedMessageSuffix')}`);
+  };
+
+  // 現在表示中のプランを共有する。対応端末ではOSの共有シートを開き、
+  // 非対応環境（多くのデスクトップブラウザ）ではプラン本文をクリップボードにコピーする。
+  const handleSharePlan = async () => {
+    if (!planGenerated || !planText.trim()) return;
+    const title = `${conditions.destination || t(language, 'savedPlanDefaultDestination')}${t(language, 'savedPlanTitleSuffix')}`;
+    const shareText = `${title}\n\n${planText}`;
+    try {
+      if (typeof navigator !== 'undefined' && navigator.share) {
+        await navigator.share({ title, text: shareText });
+        return;
+      }
+      if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(shareText);
+        appendMessage('ai', t(language, 'shareClipboardMessage'));
+        return;
+      }
+      throw new Error('Web Share API / Clipboard API is not available in this browser');
+    } catch (error) {
+      // ユーザーが共有シートをキャンセルした場合はエラー表示しない
+      if (error instanceof DOMException && error.name === 'AbortError') return;
+      appendMessage('ai', `${t(language, 'shareErrorPrefix')}${String(error)}`);
+    }
   };
 
   // 保存済みプランを画面に復元する。条件・本文・タブ表示をまとめて元に戻す。
@@ -749,12 +1149,13 @@ export default function App() {
     setPlanText(plan.planText);
     setPlanGenerated(true);
     setIntakeStep('ready');
-    setScheduleStartDate('');
-    setScheduleEndDate('');
+    setScheduleStartDate(plan.scheduleStartDate ?? '');
+    setScheduleEndDate(plan.scheduleEndDate ?? '');
     setActivePlanTab('schedule');
     setMobileTab('plan');
     setErrorMessage('');
     setIsSavedOpen(false);
+    setIsCalendarOpen(false);
     appendMessage('ai', `${t(language, 'loadedMessagePrefix')}${plan.title}${t(language, 'loadedMessageSuffix')}`);
   };
 
@@ -925,11 +1326,17 @@ export default function App() {
         onLanguageChange={handleLanguageChange}
         savedCount={savedPlans.length}
         onOpenSaved={() => setIsSavedOpen(true)}
+        onOpenCalendar={() => setIsCalendarOpen(true)}
         onNewChat={startNewChat}
         onBackHome={() => setView('top')}
       />
       <div className="workspace">
-        <Header language={language} planGenerated={planGenerated} onSavePlan={handleSavePlan} />
+        <Header
+          language={language}
+          planGenerated={planGenerated}
+          onSavePlan={handleSavePlan}
+          onSharePlan={handleSharePlan}
+        />
         <MobileTabs language={language} activeTab={mobileTab} onChange={setMobileTab} />
         <main className="content-grid">
           <section className={`chat-column mobile-panel ${mobileTab === 'chat' ? 'mobile-panel--active' : ''}`}>
@@ -987,6 +1394,15 @@ export default function App() {
           onDelete={handleDeletePlan}
         />
       )}
+      {isCalendarOpen && (
+        <CalendarView
+          language={language}
+          plans={savedPlans}
+          defaultPlace={conditions.destination}
+          onClose={() => setIsCalendarOpen(false)}
+          onOpenPlan={handleLoadPlan}
+        />
+      )}
     </div>
   );
 }
@@ -1030,10 +1446,12 @@ function Header({
   language,
   planGenerated,
   onSavePlan,
+  onSharePlan,
 }: {
   language: Language;
   planGenerated: boolean;
   onSavePlan: () => void;
+  onSharePlan: () => void;
 }) {
   return (
     <header className="app-header">
@@ -1042,7 +1460,12 @@ function Header({
         <h1>{t(language, 'appTitle')}</h1>
         <p>{t(language, 'appSubtitle')}</p>
       </div>
-      <ActionButtons language={language} planGenerated={planGenerated} onSavePlan={onSavePlan} />
+      <ActionButtons
+        language={language}
+        planGenerated={planGenerated}
+        onSavePlan={onSavePlan}
+        onSharePlan={onSharePlan}
+      />
     </header>
   );
 }
@@ -1051,19 +1474,21 @@ function ActionButtons({
   language,
   planGenerated,
   onSavePlan,
+  onSharePlan,
 }: {
   language: Language;
   planGenerated: boolean;
   onSavePlan: () => void;
+  onSharePlan: () => void;
 }) {
   return (
     <div className="header-actions">
-      {/* プラン未生成のときは保存できないので無効化する */}
+      {/* プラン未生成のときは保存・共有できないので無効化する */}
       <button className="ghost-action" type="button" disabled={!planGenerated} onClick={onSavePlan}>
         <span>💾</span>
         {t(language, 'actionSave')}
       </button>
-      <button className="ghost-action" type="button" disabled={!planGenerated}>
+      <button className="ghost-action" type="button" disabled={!planGenerated} onClick={onSharePlan}>
         <span>↗</span>
         {t(language, 'actionShare')}
       </button>
@@ -1105,6 +1530,7 @@ function Sidebar({
   onLanguageChange,
   savedCount,
   onOpenSaved,
+  onOpenCalendar,
   onNewChat,
   onBackHome,
 }: {
@@ -1112,6 +1538,7 @@ function Sidebar({
   onLanguageChange: (language: Language) => void;
   savedCount: number;
   onOpenSaved: () => void;
+  onOpenCalendar: () => void;
   onNewChat: () => void;
   onBackHome: () => void;
 }) {
@@ -1120,6 +1547,7 @@ function Sidebar({
     [t(language, 'navPlan'), '🗓'],
     [t(language, 'navMap'), '🗺'],
     [t(language, 'navSaved'), '💾'],
+    [t(language, 'navCalendar'), '📅'],
     [t(language, 'navFavorite'), '♡'],
     [t(language, 'navSettings'), '⚙'],
   ];
@@ -1137,9 +1565,11 @@ function Sidebar({
       <nav className="nav-list" aria-label="Main navigation">
         {items.map(([label, icon]) => {
           const isSaved = label === t(language, 'navSaved');
+          const isCalendar = label === t(language, 'navCalendar');
           const isChat = label === t(language, 'navChat');
-          // 「チャット」で新規チャット開始、「保存したプラン」で保存一覧モーダル。他は従来どおり装飾用。
-          const onClick = isChat ? onNewChat : isSaved ? onOpenSaved : undefined;
+          // 「チャット」で新規チャット開始、「保存したプラン」で保存一覧モーダル、
+          // 「カレンダー」で旅行カレンダー。他は従来どおり装飾用。
+          const onClick = isChat ? onNewChat : isSaved ? onOpenSaved : isCalendar ? onOpenCalendar : undefined;
           return (
             <button
               key={label}

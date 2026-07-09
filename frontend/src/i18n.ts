@@ -58,6 +58,7 @@ export type Dict = {
   navPlan: string;
   navMap: string;
   navSaved: string;
+  navCalendar: string;
   navFavorite: string;
   navSettings: string;
   brandName: string;
@@ -193,6 +194,8 @@ export type Dict = {
   savedMessageSuffix: string;
   loadedMessagePrefix: string;
   loadedMessageSuffix: string;
+  shareClipboardMessage: string;
+  shareErrorPrefix: string;
 
   summarizeDeparture: string;
   summarizeDestination: string;
@@ -243,6 +246,19 @@ export type Dict = {
   weatherSnowShowers: string;
   weatherThunderstorm: string;
 
+  calendarViewTitle: string;
+  calendarViewSubtitle: string;
+  calendarTodayButton: string;
+  calendarLegendStay: string;
+  calendarLegendDay: string;
+  calendarUpcomingTitle: string;
+  calendarUpcomingEmpty: string;
+  calendarOpenPlan: string;
+  calendarSelectedTitle: string;
+  calendarSelectedEmpty: string;
+  calendarOngoing: string;
+  calendarFinished: string;
+
   purposeLabels: Record<PurposeId, string>;
 };
 
@@ -254,6 +270,7 @@ export const DICTIONARIES: Record<Language, Dict> = {
     navPlan: '旅行プラン',
     navMap: 'マップ',
     navSaved: '保存したプラン',
+    navCalendar: 'カレンダー',
     navFavorite: 'お気に入り',
     navSettings: '設定',
     brandName: 'Travel AI',
@@ -389,6 +406,8 @@ export const DICTIONARIES: Record<Language, Dict> = {
     savedMessageSuffix: '」を保存しました。左メニューの「保存したプラン」からいつでも見返せます。',
     loadedMessagePrefix: '保存した「',
     loadedMessageSuffix: '」を読み込みました。',
+    shareClipboardMessage: 'プラン内容をクリップボードにコピーしました。SNSやメッセージアプリに貼り付けて共有できます。',
+    shareErrorPrefix: '共有に失敗しました: ',
 
     summarizeDeparture: '出発地点',
     summarizeDestination: '行先',
@@ -439,6 +458,19 @@ export const DICTIONARIES: Record<Language, Dict> = {
     weatherSnowShowers: 'にわか雪',
     weatherThunderstorm: '雷雨',
 
+    calendarViewTitle: '旅行カレンダー',
+    calendarViewSubtitle: '保存した旅行を日付ごとに管理できます。',
+    calendarTodayButton: '今日',
+    calendarLegendStay: '宿泊あり',
+    calendarLegendDay: '日帰り',
+    calendarUpcomingTitle: '近日の旅行',
+    calendarUpcomingEmpty: '予定されている旅行はありません。プランを保存するとここに表示されます。',
+    calendarOpenPlan: 'プランを見る',
+    calendarSelectedTitle: '選択した日の予定',
+    calendarSelectedEmpty: 'この日に予定されている旅行はありません。',
+    calendarOngoing: '旅行中',
+    calendarFinished: '終了',
+
     purposeLabels: {
       sightseeing: '観光',
       food: 'グルメ',
@@ -458,6 +490,7 @@ export const DICTIONARIES: Record<Language, Dict> = {
     navPlan: 'Trip Plan',
     navMap: 'Map',
     navSaved: 'Saved Plans',
+    navCalendar: 'Calendar',
     navFavorite: 'Favorites',
     navSettings: 'Settings',
     brandName: 'Travel AI',
@@ -593,6 +626,8 @@ export const DICTIONARIES: Record<Language, Dict> = {
     savedMessageSuffix: '" has been saved. You can revisit it anytime from "Saved Plans" in the left menu.',
     loadedMessagePrefix: 'Loaded the saved plan "',
     loadedMessageSuffix: '".',
+    shareClipboardMessage: 'Copied the plan to your clipboard. You can paste it into a message or social app to share it.',
+    shareErrorPrefix: 'Failed to share the plan: ',
 
     summarizeDeparture: 'Departure',
     summarizeDestination: 'Destination',
@@ -643,6 +678,19 @@ export const DICTIONARIES: Record<Language, Dict> = {
     weatherSnowShowers: 'Snow showers',
     weatherThunderstorm: 'Thunderstorm',
 
+    calendarViewTitle: 'Trip Calendar',
+    calendarViewSubtitle: 'Manage your saved trips by date.',
+    calendarTodayButton: 'Today',
+    calendarLegendStay: 'Overnight',
+    calendarLegendDay: 'Day trip',
+    calendarUpcomingTitle: 'Upcoming trips',
+    calendarUpcomingEmpty: 'No trips scheduled yet. Save a plan to see it here.',
+    calendarOpenPlan: 'View plan',
+    calendarSelectedTitle: 'Selected day',
+    calendarSelectedEmpty: 'No trips scheduled for this day.',
+    calendarOngoing: 'Ongoing',
+    calendarFinished: 'Finished',
+
     purposeLabels: {
       sightseeing: 'Sightseeing',
       food: 'Food',
@@ -662,6 +710,7 @@ export const DICTIONARIES: Record<Language, Dict> = {
     navPlan: 'Reiseplan',
     navMap: 'Karte',
     navSaved: 'Gespeicherte Pläne',
+    navCalendar: 'Kalender',
     navFavorite: 'Favoriten',
     navSettings: 'Einstellungen',
     brandName: 'Travel AI',
@@ -797,6 +846,8 @@ export const DICTIONARIES: Record<Language, Dict> = {
     savedMessageSuffix: '" wurde gespeichert. Du findest ihn jederzeit unter "Gespeicherte Pläne" im linken Menü.',
     loadedMessagePrefix: 'Gespeicherten Plan "',
     loadedMessageSuffix: '" geladen.',
+    shareClipboardMessage: 'Der Plan wurde in die Zwischenablage kopiert. Du kannst ihn in eine Nachricht oder App einfügen, um ihn zu teilen.',
+    shareErrorPrefix: 'Der Plan konnte nicht geteilt werden: ',
 
     summarizeDeparture: 'Abfahrtsort',
     summarizeDestination: 'Reiseziel',
@@ -847,6 +898,19 @@ export const DICTIONARIES: Record<Language, Dict> = {
     weatherSnowShowers: 'Schneeschauer',
     weatherThunderstorm: 'Gewitter',
 
+    calendarViewTitle: 'Reisekalender',
+    calendarViewSubtitle: 'Verwalte deine gespeicherten Reisen nach Datum.',
+    calendarTodayButton: 'Heute',
+    calendarLegendStay: 'Übernachtung',
+    calendarLegendDay: 'Tagesausflug',
+    calendarUpcomingTitle: 'Bevorstehende Reisen',
+    calendarUpcomingEmpty: 'Noch keine Reisen geplant. Speichere einen Plan, um ihn hier zu sehen.',
+    calendarOpenPlan: 'Plan ansehen',
+    calendarSelectedTitle: 'Ausgewählter Tag',
+    calendarSelectedEmpty: 'Für diesen Tag sind keine Reisen geplant.',
+    calendarOngoing: 'Läuft gerade',
+    calendarFinished: 'Beendet',
+
     purposeLabels: {
       sightseeing: 'Sightseeing',
       food: 'Kulinarik',
@@ -866,6 +930,7 @@ export const DICTIONARIES: Record<Language, Dict> = {
     navPlan: '旅行计划',
     navMap: '地图',
     navSaved: '已保存的计划',
+    navCalendar: '日历',
     navFavorite: '收藏',
     navSettings: '设置',
     brandName: 'Travel AI',
@@ -1001,6 +1066,8 @@ export const DICTIONARIES: Record<Language, Dict> = {
     savedMessageSuffix: '」已保存。您可以随时在左侧菜单的"已保存的计划"中查看。',
     loadedMessagePrefix: '已加载已保存的「',
     loadedMessageSuffix: '」。',
+    shareClipboardMessage: '已将计划复制到剪贴板。您可以粘贴到消息或社交应用中进行分享。',
+    shareErrorPrefix: '分享计划失败: ',
 
     summarizeDeparture: '出发地',
     summarizeDestination: '目的地',
@@ -1051,6 +1118,19 @@ export const DICTIONARIES: Record<Language, Dict> = {
     weatherSnowShowers: '阵雪',
     weatherThunderstorm: '雷雨',
 
+    calendarViewTitle: '旅行日历',
+    calendarViewSubtitle: '按日期管理已保存的旅行。',
+    calendarTodayButton: '今天',
+    calendarLegendStay: '过夜',
+    calendarLegendDay: '当天往返',
+    calendarUpcomingTitle: '近期旅行',
+    calendarUpcomingEmpty: '暂无安排的旅行。保存计划后会显示在这里。',
+    calendarOpenPlan: '查看计划',
+    calendarSelectedTitle: '所选日期的安排',
+    calendarSelectedEmpty: '这一天没有安排的旅行。',
+    calendarOngoing: '旅行中',
+    calendarFinished: '已结束',
+
     purposeLabels: {
       sightseeing: '观光',
       food: '美食',
@@ -1070,6 +1150,7 @@ export const DICTIONARIES: Record<Language, Dict> = {
     navPlan: '여행 계획',
     navMap: '지도',
     navSaved: '저장한 계획',
+    navCalendar: '캘린더',
     navFavorite: '즐겨찾기',
     navSettings: '설정',
     brandName: 'Travel AI',
@@ -1205,6 +1286,8 @@ export const DICTIONARIES: Record<Language, Dict> = {
     savedMessageSuffix: '"을 저장했습니다. 왼쪽 메뉴의 "저장한 계획"에서 언제든지 다시 볼 수 있습니다.',
     loadedMessagePrefix: '저장한 "',
     loadedMessageSuffix: '"을 불러왔습니다.',
+    shareClipboardMessage: '플랜 내용을 클립보드에 복사했습니다. 메시지나 SNS 앱에 붙여넣어 공유할 수 있습니다.',
+    shareErrorPrefix: '공유에 실패했습니다: ',
 
     summarizeDeparture: '출발지',
     summarizeDestination: '목적지',
@@ -1254,6 +1337,19 @@ export const DICTIONARIES: Record<Language, Dict> = {
     weatherRainShowers: '소나기',
     weatherSnowShowers: '소나기눈',
     weatherThunderstorm: '뇌우',
+
+    calendarViewTitle: '여행 캘린더',
+    calendarViewSubtitle: '저장한 여행을 날짜별로 관리할 수 있습니다.',
+    calendarTodayButton: '오늘',
+    calendarLegendStay: '숙박',
+    calendarLegendDay: '당일치기',
+    calendarUpcomingTitle: '다가오는 여행',
+    calendarUpcomingEmpty: '예정된 여행이 없습니다. 플랜을 저장하면 여기에 표시됩니다.',
+    calendarOpenPlan: '플랜 보기',
+    calendarSelectedTitle: '선택한 날짜의 일정',
+    calendarSelectedEmpty: '이 날짜에 예정된 여행이 없습니다.',
+    calendarOngoing: '여행 중',
+    calendarFinished: '종료',
 
     purposeLabels: {
       sightseeing: '관광',
