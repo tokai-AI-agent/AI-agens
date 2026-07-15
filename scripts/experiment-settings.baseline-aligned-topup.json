@@ -1,0 +1,38 @@
+{
+  "baseUrl": "http://localhost:4111",
+  "repeat": 12,
+  "hintVariants": [true],
+  "delayMs": 25000,
+  "maxAttemptsPerRun": 3,
+  "retryDelayMs": 60000,
+  "settings": [
+    {
+      "settingLabel": "minatomirai-fireworks-baseline-aligned",
+      "request": {
+        "conditions": {
+          "destination": "横浜・みなとみらい",
+          "departure": "慶應義塾大学日吉キャンパス",
+          "schedule": "2026/08/03（日帰り）",
+          "budget": "1万円",
+          "people": "2人",
+          "purposes": ["花火"]
+        },
+        "anchor": {
+          "name": "みなとみらいの花火フェスティバル",
+          "venueAddress": "神奈川県横浜市西区みなとみらい21地区 臨港パーク周辺",
+          "startTime": "18:00",
+          "durationMinutes": 120,
+          "dayIndex": 1
+        },
+        "preEventSpotName": "慶應義塾大学日吉キャンパス",
+        "travel": {
+          "originLegMinutes": 0,
+          "defaultMinutes": 15,
+          "toEventMinutes": 40
+        },
+        "window": { "dayStart": "13:00", "dayEnd": "21:30" },
+        "options": { "maxItemsPerDay": 2 }
+      }
+    }
+  ]
+}

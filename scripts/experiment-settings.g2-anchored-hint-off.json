@@ -1,0 +1,40 @@
+{
+  "baseUrl": "http://localhost:4111",
+  "endpoint": "/plan/anchored",
+  "repeat": 50,
+  "hintVariants": [false],
+  "delayMs": 25000,
+  "maxAttemptsPerRun": 3,
+  "retryDelayMs": 60000,
+  "settings": [
+    {
+      "settingLabel": "g2-anchored",
+      "request": {
+        "conditions": {
+          "destination": "京都",
+          "departure": "大阪駅",
+          "schedule": "2026/07/15（日帰り）",
+          "budget": "1万円",
+          "people": "2人",
+          "purposes": ["観光", "祭り"]
+        },
+        "anchor": {
+          "name": "祇園祭 宵山",
+          "venueAddress": "京都府京都市下京区四条通烏丸周辺",
+          "startTime": "18:30",
+          "durationMinutes": 120,
+          "dayIndex": 1
+        },
+        "preEventSpotName": "金閣寺",
+        "travel": {
+          "originLegMinutes": 45,
+          "defaultMinutes": 15,
+          "toEventMinutes": 50
+        },
+        "window": { "dayStart": "12:00", "dayEnd": "22:00" },
+        "options": { "maxItemsPerDay": 4 },
+        "eventMatchKeywords": ["宵山", "祇園祭"]
+      }
+    }
+  ]
+}

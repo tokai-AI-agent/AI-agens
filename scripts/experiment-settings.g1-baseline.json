@@ -1,0 +1,39 @@
+{
+  "baseUrl": "http://localhost:4111",
+  "endpoint": "/plan/baseline",
+  "repeat": 50,
+  "hintVariants": [false],
+  "delayMs": 25000,
+  "maxAttemptsPerRun": 3,
+  "retryDelayMs": 60000,
+  "settings": [
+    {
+      "settingLabel": "g1-baseline",
+      "request": {
+        "conditions": {
+          "destination": "東京都心",
+          "departure": "東京駅",
+          "schedule": "2026/08/10（日帰り）",
+          "budget": "1.5万円",
+          "people": "2人",
+          "purposes": ["観劇", "観光"]
+        },
+        "anchor": {
+          "name": "劇団四季『ライオンキング』昼公演",
+          "venueAddress": "東京都港区海岸1-10-53 JR東日本四季劇場",
+          "startTime": "13:30",
+          "durationMinutes": 150,
+          "dayIndex": 1
+        },
+        "preEventSpotName": "浅草寺",
+        "travel": {
+          "originLegMinutes": 20,
+          "defaultMinutes": 15,
+          "toEventMinutes": 45
+        },
+        "window": { "dayStart": "09:00", "dayEnd": "21:00" },
+        "eventMatchKeywords": ["ライオンキング", "公演", "ミュージカル", "観劇"]
+      }
+    }
+  ]
+}

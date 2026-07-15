@@ -1,0 +1,35 @@
+{
+  "baseUrl": "http://localhost:4111",
+  "repeat": 3,
+  "hintVariants": [false, true],
+  "delayMs": 3000,
+  "settings": [
+    {
+      "settingLabel": "kyoto-gion-evening",
+      "request": {
+        "conditions": {
+          "destination": "京都",
+          "departure": "東京",
+          "schedule": "2026/07/18（日帰り）",
+          "budget": "3万円",
+          "people": "2人",
+          "purposes": ["観光", "グルメ"]
+        },
+        "anchor": {
+          "name": "祇園祭 宵山",
+          "venueAddress": "京都府京都市下京区四条通烏丸周辺",
+          "startTime": "18:00",
+          "durationMinutes": 120,
+          "dayIndex": 1
+        },
+        "preEventSpotName": "錦市場",
+        "travel": {
+          "originLegMinutes": 135,
+          "defaultMinutes": 15,
+          "toEventMinutes": 20
+        },
+        "window": { "dayStart": "08:00", "dayEnd": "21:30" }
+      }
+    }
+  ]
+}

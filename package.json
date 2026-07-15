@@ -4,12 +4,13 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "vitest run",
     "dev": "mastra dev",
     "dev:api": "mastra dev",
     "dev:frontend": "npm --prefix frontend run dev",
     "build": "mastra build",
-    "start": "mastra start"
+    "start": "mastra start",
+    "experiment": "node scripts/run-experiment.ts"
   },
   "keywords": [],
   "author": "",
@@ -29,6 +30,7 @@
   "devDependencies": {
     "@types/node": "^25.9.1",
     "mastra": "^1.12.2",
-    "typescript": "^6.0.3"
+    "typescript": "^6.0.3",
+    "vitest": "^4.1.9"
   }
 }
