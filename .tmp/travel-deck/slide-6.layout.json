@@ -1,0 +1,1087 @@
+{
+  "schema": "openai.presentation.layout/v4",
+  "unit": "px",
+  "slide": {
+    "aid": "sl/c6ws5n",
+    "id": "c6ws5n",
+    "slide": 6,
+    "layoutId": "5ff8b52c-4dc9-457e-843c-8d4b79684ba8",
+    "layoutName": "Title Slide",
+    "layoutType": "title",
+    "masterLayoutId": "0cec9b26-e3ce-470c-96a9-d9853c65606b",
+    "masterLayoutName": "Master",
+    "backgroundColor": "#FFFFFF",
+    "frame": {
+      "left": 0,
+      "top": 0,
+      "width": 1280,
+      "height": 720
+    }
+  },
+  "theme": {
+    "colorSchemeName": "ChatGPT",
+    "colors": {
+      "accent1": "#156082",
+      "accent2": "#E97132",
+      "accent3": "#196B24",
+      "accent4": "#0F9ED5",
+      "accent5": "#A02B93",
+      "accent6": "#4EA72E",
+      "bg1": "#FFFFFF",
+      "bg2": "#000000",
+      "tx1": "#1F1F1F",
+      "tx2": "#FFFFFF",
+      "dk1": "#000000",
+      "lt1": "#FFFFFF",
+      "dk2": "#0E2841",
+      "lt2": "#E8E8E8",
+      "hlink": "#467886",
+      "folHlink": "#96607D"
+    },
+    "typefaces": [
+      "Yu Gothic"
+    ]
+  },
+  "inheritedLayers": [
+    {
+      "scope": "layout",
+      "id": "5ff8b52c-4dc9-457e-843c-8d4b79684ba8",
+      "name": "Title Slide",
+      "type": "title",
+      "parentLayoutId": "0cec9b26-e3ce-470c-96a9-d9853c65606b",
+      "elements": []
+    },
+    {
+      "scope": "master",
+      "id": "0cec9b26-e3ce-470c-96a9-d9853c65606b",
+      "name": "Master",
+      "type": "master",
+      "elements": []
+    }
+  ],
+  "elements": [
+    {
+      "order": 1,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/up8zm1ov",
+      "id": "1",
+      "name": "title",
+      "bbox": [
+        42,
+        36,
+        1196,
+        75
+      ],
+      "geometry": "rect",
+      "text": "完成が終点じゃない。一言で、旅は何度でも変わる",
+      "textPreview": "完成が終点じゃない。一言で、旅は何度でも変わる",
+      "resolvedFontSize": 39,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 39,
+        "typeface": "Yu Gothic",
+        "color": "#101820",
+        "bold": true,
+        "alignment": "left",
+        "verticalAlignment": "top",
+        "insets": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "完成が終点じゃない。一言で、旅は何度でも変わる"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "完成が終点じゃない。一言で、旅は何度でも変わる",
+          "resolvedTextStyle": {
+            "fontSize": 39,
+            "typeface": "Yu Gothic",
+            "color": "#101820",
+            "bold": true,
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "完成が終点じゃない。一言で、旅は何度でも変わる",
+              "fontSize": 39,
+              "typeface": "Yu Gothic",
+              "color": "#101820",
+              "bold": true,
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 2,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/hszixg76",
+      "id": "2",
+      "name": "card0",
+      "bbox": [
+        42,
+        150,
+        375,
+        365
+      ],
+      "geometry": "roundRect",
+      "fillColor": "#EEF1F4",
+      "lineWidth": 0
+    },
+    {
+      "order": 3,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/grqhob61",
+      "id": "3",
+      "name": "num0",
+      "bbox": [
+        72,
+        180,
+        70,
+        42
+      ],
+      "geometry": "rect",
+      "text": "01",
+      "textPreview": "01",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 24,
+        "typeface": "Yu Gothic",
+        "color": "#2F80ED",
+        "bold": true,
+        "alignment": "left",
+        "verticalAlignment": "top",
+        "insets": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "01"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "01",
+          "resolvedTextStyle": {
+            "fontSize": 24,
+            "typeface": "Yu Gothic",
+            "color": "#2F80ED",
+            "bold": true,
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "01",
+              "fontSize": 24,
+              "typeface": "Yu Gothic",
+              "color": "#2F80ED",
+              "bold": true,
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 4,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/3u10z6pc",
+      "id": "4",
+      "name": "head0",
+      "bbox": [
+        72,
+        245,
+        315,
+        55
+      ],
+      "geometry": "rect",
+      "text": "もっとゆっくり",
+      "textPreview": "もっとゆっくり",
+      "resolvedFontSize": 29,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 29,
+        "typeface": "Yu Gothic",
+        "color": "#101820",
+        "bold": true,
+        "alignment": "left",
+        "verticalAlignment": "top",
+        "insets": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "もっとゆっくり"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "もっとゆっくり",
+          "resolvedTextStyle": {
+            "fontSize": 29,
+            "typeface": "Yu Gothic",
+            "color": "#101820",
+            "bold": true,
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "もっとゆっくり",
+              "fontSize": 29,
+              "typeface": "Yu Gothic",
+              "color": "#101820",
+              "bold": true,
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 5,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/itszqlor",
+      "id": "5",
+      "name": "body0",
+      "bbox": [
+        72,
+        330,
+        315,
+        140
+      ],
+      "geometry": "rect",
+      "text": "早朝出発を緩め、\n滞在時間を長く。\n「詰め込みすぎ」を解消。",
+      "textPreview": "早朝出発を緩め、 | 滞在時間を長く。 | 「詰め込みすぎ」を解消。",
+      "resolvedFontSize": 22,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 22,
+        "typeface": "Yu Gothic",
+        "color": "#66717D",
+        "alignment": "left",
+        "verticalAlignment": "top",
+        "insets": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      },
+      "textLayout": {
+        "lineCount": 3,
+        "lines": [
+          {
+            "index": 1,
+            "text": "早朝出発を緩め、"
+          },
+          {
+            "index": 2,
+            "text": "滞在時間を長く。"
+          },
+          {
+            "index": 3,
+            "text": "「詰め込みすぎ」を解消。"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "早朝出発を緩め、",
+          "resolvedTextStyle": {
+            "fontSize": 22,
+            "typeface": "Yu Gothic",
+            "color": "#66717D",
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "早朝出発を緩め、",
+              "fontSize": 22,
+              "typeface": "Yu Gothic",
+              "color": "#66717D",
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        },
+        {
+          "index": 2,
+          "text": "滞在時間を長く。",
+          "resolvedTextStyle": {
+            "fontSize": 22,
+            "typeface": "Yu Gothic",
+            "color": "#66717D",
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "滞在時間を長く。",
+              "fontSize": 22,
+              "typeface": "Yu Gothic",
+              "color": "#66717D",
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        },
+        {
+          "index": 3,
+          "text": "「詰め込みすぎ」を解消。",
+          "resolvedTextStyle": {
+            "fontSize": 22,
+            "typeface": "Yu Gothic",
+            "color": "#66717D",
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "「詰め込みすぎ」を解消。",
+              "fontSize": 22,
+              "typeface": "Yu Gothic",
+              "color": "#66717D",
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 6,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/5gji1g7i",
+      "id": "6",
+      "name": "card1",
+      "bbox": [
+        453,
+        150,
+        375,
+        365
+      ],
+      "geometry": "roundRect",
+      "fillColor": "#EAF5FB",
+      "lineWidth": 0
+    },
+    {
+      "order": 7,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/4fahsb6x",
+      "id": "7",
+      "name": "num1",
+      "bbox": [
+        483,
+        180,
+        70,
+        42
+      ],
+      "geometry": "rect",
+      "text": "02",
+      "textPreview": "02",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 24,
+        "typeface": "Yu Gothic",
+        "color": "#2F80ED",
+        "bold": true,
+        "alignment": "left",
+        "verticalAlignment": "top",
+        "insets": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "02"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "02",
+          "resolvedTextStyle": {
+            "fontSize": 24,
+            "typeface": "Yu Gothic",
+            "color": "#2F80ED",
+            "bold": true,
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "02",
+              "fontSize": 24,
+              "typeface": "Yu Gothic",
+              "color": "#2F80ED",
+              "bold": true,
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 8,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/ri103qpo",
+      "id": "8",
+      "name": "head1",
+      "bbox": [
+        483,
+        245,
+        315,
+        55
+      ],
+      "geometry": "rect",
+      "text": "グルメ多めに",
+      "textPreview": "グルメ多めに",
+      "resolvedFontSize": 29,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 29,
+        "typeface": "Yu Gothic",
+        "color": "#101820",
+        "bold": true,
+        "alignment": "left",
+        "verticalAlignment": "top",
+        "insets": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "グルメ多めに"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "グルメ多めに",
+          "resolvedTextStyle": {
+            "fontSize": 29,
+            "typeface": "Yu Gothic",
+            "color": "#101820",
+            "bold": true,
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "グルメ多めに",
+              "fontSize": 29,
+              "typeface": "Yu Gothic",
+              "color": "#101820",
+              "bold": true,
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 9,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/qhszulo3",
+      "id": "9",
+      "name": "body1",
+      "bbox": [
+        483,
+        330,
+        315,
+        140
+      ],
+      "geometry": "rect",
+      "text": "おばんざい、京スイーツ、\nカフェ休憩を追加。\n旅の記憶に味を足す。",
+      "textPreview": "おばんざい、京スイーツ、 | カフェ休憩を追加。 | 旅の記憶に味を足す。",
+      "resolvedFontSize": 22,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 22,
+        "typeface": "Yu Gothic",
+        "color": "#66717D",
+        "alignment": "left",
+        "verticalAlignment": "top",
+        "insets": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      },
+      "textLayout": {
+        "lineCount": 3,
+        "lines": [
+          {
+            "index": 1,
+            "text": "おばんざい、京スイーツ、"
+          },
+          {
+            "index": 2,
+            "text": "カフェ休憩を追加。"
+          },
+          {
+            "index": 3,
+            "text": "旅の記憶に味を足す。"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "おばんざい、京スイーツ、",
+          "resolvedTextStyle": {
+            "fontSize": 22,
+            "typeface": "Yu Gothic",
+            "color": "#66717D",
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "おばんざい、京スイーツ、",
+              "fontSize": 22,
+              "typeface": "Yu Gothic",
+              "color": "#66717D",
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        },
+        {
+          "index": 2,
+          "text": "カフェ休憩を追加。",
+          "resolvedTextStyle": {
+            "fontSize": 22,
+            "typeface": "Yu Gothic",
+            "color": "#66717D",
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "カフェ休憩を追加。",
+              "fontSize": 22,
+              "typeface": "Yu Gothic",
+              "color": "#66717D",
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        },
+        {
+          "index": 3,
+          "text": "旅の記憶に味を足す。",
+          "resolvedTextStyle": {
+            "fontSize": 22,
+            "typeface": "Yu Gothic",
+            "color": "#66717D",
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "旅の記憶に味を足す。",
+              "fontSize": 22,
+              "typeface": "Yu Gothic",
+              "color": "#66717D",
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 10,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/kv6pwfqh",
+      "id": "10",
+      "name": "card2",
+      "bbox": [
+        865,
+        150,
+        375,
+        365
+      ],
+      "geometry": "roundRect",
+      "fillColor": "#EEF1F4",
+      "lineWidth": 0
+    },
+    {
+      "order": 11,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/5wfqpk72",
+      "id": "11",
+      "name": "num2",
+      "bbox": [
+        895,
+        180,
+        70,
+        42
+      ],
+      "geometry": "rect",
+      "text": "03",
+      "textPreview": "03",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 24,
+        "typeface": "Yu Gothic",
+        "color": "#2F80ED",
+        "bold": true,
+        "alignment": "left",
+        "verticalAlignment": "top",
+        "insets": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "03"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "03",
+          "resolvedTextStyle": {
+            "fontSize": 24,
+            "typeface": "Yu Gothic",
+            "color": "#2F80ED",
+            "bold": true,
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "03",
+              "fontSize": 24,
+              "typeface": "Yu Gothic",
+              "color": "#2F80ED",
+              "bold": true,
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 12,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/ito7u58b",
+      "id": "12",
+      "name": "head2",
+      "bbox": [
+        895,
+        245,
+        315,
+        55
+      ],
+      "geometry": "rect",
+      "text": "雨の日向けに",
+      "textPreview": "雨の日向けに",
+      "resolvedFontSize": 29,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 29,
+        "typeface": "Yu Gothic",
+        "color": "#101820",
+        "bold": true,
+        "alignment": "left",
+        "verticalAlignment": "top",
+        "insets": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "雨の日向けに"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "雨の日向けに",
+          "resolvedTextStyle": {
+            "fontSize": 29,
+            "typeface": "Yu Gothic",
+            "color": "#101820",
+            "bold": true,
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "雨の日向けに",
+              "fontSize": 29,
+              "typeface": "Yu Gothic",
+              "color": "#101820",
+              "bold": true,
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 13,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/jux8napw",
+      "id": "13",
+      "name": "body2",
+      "bbox": [
+        895,
+        330,
+        315,
+        140
+      ],
+      "geometry": "rect",
+      "text": "屋内で楽しめる文化施設と\n移動の少ないルートへ。\n天気で旅を諦めない。",
+      "textPreview": "屋内で楽しめる文化施設と | 移動の少ないルートへ。 | 天気で旅を諦めない。",
+      "resolvedFontSize": 22,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 22,
+        "typeface": "Yu Gothic",
+        "color": "#66717D",
+        "alignment": "left",
+        "verticalAlignment": "top",
+        "insets": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      },
+      "textLayout": {
+        "lineCount": 3,
+        "lines": [
+          {
+            "index": 1,
+            "text": "屋内で楽しめる文化施設と"
+          },
+          {
+            "index": 2,
+            "text": "移動の少ないルートへ。"
+          },
+          {
+            "index": 3,
+            "text": "天気で旅を諦めない。"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "屋内で楽しめる文化施設と",
+          "resolvedTextStyle": {
+            "fontSize": 22,
+            "typeface": "Yu Gothic",
+            "color": "#66717D",
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "屋内で楽しめる文化施設と",
+              "fontSize": 22,
+              "typeface": "Yu Gothic",
+              "color": "#66717D",
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        },
+        {
+          "index": 2,
+          "text": "移動の少ないルートへ。",
+          "resolvedTextStyle": {
+            "fontSize": 22,
+            "typeface": "Yu Gothic",
+            "color": "#66717D",
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "移動の少ないルートへ。",
+              "fontSize": 22,
+              "typeface": "Yu Gothic",
+              "color": "#66717D",
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        },
+        {
+          "index": 3,
+          "text": "天気で旅を諦めない。",
+          "resolvedTextStyle": {
+            "fontSize": 22,
+            "typeface": "Yu Gothic",
+            "color": "#66717D",
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "天気で旅を諦めない。",
+              "fontSize": 22,
+              "typeface": "Yu Gothic",
+              "color": "#66717D",
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 14,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/szqp0f6t",
+      "id": "14",
+      "name": "rule",
+      "bbox": [
+        42,
+        560,
+        1196,
+        2
+      ],
+      "geometry": "rect",
+      "fillColor": "#101820",
+      "lineWidth": 0
+    },
+    {
+      "order": 15,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/t0zqtk7y",
+      "id": "15",
+      "name": "bottom",
+      "bbox": [
+        42,
+        600,
+        900,
+        48
+      ],
+      "geometry": "rect",
+      "text": "再生成ではなく、対話を続ける。",
+      "textPreview": "再生成ではなく、対話を続ける。",
+      "resolvedFontSize": 30,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 30,
+        "typeface": "Yu Gothic",
+        "color": "#101820",
+        "bold": true,
+        "alignment": "left",
+        "verticalAlignment": "top",
+        "insets": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "再生成ではなく、対話を続ける。"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "再生成ではなく、対話を続ける。",
+          "resolvedTextStyle": {
+            "fontSize": 30,
+            "typeface": "Yu Gothic",
+            "color": "#101820",
+            "bold": true,
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "再生成ではなく、対話を続ける。",
+              "fontSize": 30,
+              "typeface": "Yu Gothic",
+              "color": "#101820",
+              "bold": true,
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 16,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/6xo7ypon",
+      "id": "16",
+      "name": "footer",
+      "bbox": [
+        1180,
+        670,
+        60,
+        22
+      ],
+      "geometry": "rect",
+      "text": "06",
+      "textPreview": "06",
+      "resolvedFontSize": 14,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 14,
+        "typeface": "Yu Gothic",
+        "color": "#66717D",
+        "alignment": "right",
+        "verticalAlignment": "top",
+        "insets": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "06"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "06",
+          "resolvedTextStyle": {
+            "fontSize": 14,
+            "typeface": "Yu Gothic",
+            "color": "#66717D",
+            "alignment": "right"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "06",
+              "fontSize": 14,
+              "typeface": "Yu Gothic",
+              "color": "#66717D",
+              "alignment": "right"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    }
+  ],
+  "composeRuns": []
+}

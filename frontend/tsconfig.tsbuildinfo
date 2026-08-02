@@ -1,1 +1,1 @@
-{"root":["./src/app.tsx","./src/inputpage.tsx","./src/resultpage.tsx","./src/main.tsx","./src/vite-env.d.ts","./src/components/sidebar.tsx","./src/screens/conditioninput.tsx","./src/screens/plandetail.tsx","./src/screens/planresult.tsx","./src/screens/transportcompare.tsx"],"version":"5.8.3"}
+{"root":["./src/app.tsx","./src/grouptrip.tsx","./src/agentclient.ts","./src/i18n.ts","./src/main.tsx","./src/savedplans.ts","./src/vite-env.d.ts"],"version":"5.8.3"}

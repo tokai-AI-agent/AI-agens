@@ -1,0 +1,15 @@
+No external research or externally sourced assets were used.
+Content was derived from the local project implementation:
+- src/mastra/agents/travel-agent.ts
+- src/mastra/group-trips.ts
+- src/mastra/tools/tavily-search.ts
+- src/mastra/tools/hotpepper-search.ts
+- frontend/src/App.tsx
+- frontend/src/GroupTrip.tsx
+User-provided UI screenshots used:
+- スクリーンショット 2026-07-30 135619.png
+- スクリーンショット 2026-07-30 174524.png
+- スクリーンショット 2026-07-30 174210.png
+- スクリーンショット 2026-07-30 180313.png
+
+The map-only screenshot was intentionally omitted because the four selected screens communicate the end-to-end user experience more clearly at poster scale.

@@ -1,0 +1,66 @@
+.budget-choice-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:9px;margin-top:8px}
+.budget-choice-grid button{padding:13px 8px;border:1px solid #d9e3ee;border-radius:10px;background:#fff;color:#425466;font-weight:800;cursor:pointer}
+.budget-choice-grid button.active{border-color:#2f80ed;background:#edf6ff;color:#1769c2;box-shadow:0 0 0 2px rgba(47,128,237,.12)}
+.proposal-choice-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin:16px 0 22px}
+.proposal-choice-card{position:relative;padding:18px;border:2px solid #e1e8f0;border-radius:16px;background:#fff;cursor:pointer;transition:.18s ease}
+.proposal-choice-card:hover,.proposal-choice-card.active{border-color:#2f80ed;transform:translateY(-2px);box-shadow:0 10px 28px rgba(36,92,148,.13)}
+.proposal-choice-card.voted{background:#f1f8ff}
+.proposal-choice-card h3{margin:8px 0;font-size:19px;color:#172033}
+.proposal-choice-card p{min-height:58px;margin:0 0 12px;color:#64748b;line-height:1.55}
+.proposal-choice-card>strong{display:block;color:#e45b36}
+.proposal-choice-card>small{display:inline-block;margin-top:10px;padding:5px 9px;border-radius:20px;background:#2f80ed;color:#fff;font-weight:800}
+.proposal-number{color:#2f80ed;font-size:11px;font-weight:900;letter-spacing:.12em}
+.proposal-vote-count{position:absolute;right:14px;top:14px;padding:5px 9px;border-radius:20px;background:#edf2f7;font-size:12px;font-weight:900}
+.agreement-panel{margin:22px 0}
+.agreement-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.agreement-card{padding:17px;border-radius:14px;border-top:4px solid #2f80ed;background:#f5f9ff}
+.agreement-card.conflict{border-color:#f59e0b;background:#fffbeb}
+.agreement-card.compromise{border-color:#22a06b;background:#effbf5}
+.agreement-card h3{margin:0 0 10px;font-size:15px}
+.agreement-card ul{margin:0;padding-left:19px;color:#4b5d70}
+.agreement-card li+li{margin-top:7px}
+.group-proposal-tabs{margin-top:22px;padding:5px;display:grid;grid-template-columns:repeat(2,1fr);gap:5px;border-radius:12px;background:#eaf0f6}
+.group-proposal-tabs button{padding:12px;border:0;border-radius:9px;background:transparent;color:#64748b;cursor:pointer;font-weight:900}
+.group-proposal-tabs button.active{background:#fff;color:#2f80ed;box-shadow:0 4px 14px rgba(31,41,55,.09)}
+.group-proposal-view{padding:18px 0}
+.group-day-tabs{display:flex;gap:8px;overflow-x:auto;margin-bottom:15px;padding-bottom:3px}
+.group-day-tabs button{flex:0 0 auto;padding:9px 14px;border:1px solid #dce5ee;border-radius:20px;background:#fff;color:#586b7d;font-weight:800;cursor:pointer}
+.group-day-tabs button.active{border-color:#2f80ed;background:#2f80ed;color:#fff}
+.visual-schedule{display:grid;gap:14px}
+.visual-schedule-card{position:relative;display:grid;grid-template-columns:180px minmax(0,1fr);min-height:130px;overflow:hidden;border:1px solid #dce5ee;border-radius:15px;background:#fff;box-shadow:0 5px 18px rgba(28,55,82,.07)}
+.visual-schedule-card img{width:180px;height:100%;min-height:130px;object-fit:cover}
+.visual-schedule-card>div:last-child{padding:18px 20px}
+.visual-schedule-card time{color:#2f80ed;font-size:17px;font-weight:900}
+.visual-schedule-card h3{margin:4px 0 7px;font-size:19px}
+.visual-schedule-card p{margin:0;color:#627285;line-height:1.6}
+.schedule-order{position:absolute;left:10px;top:10px;z-index:1;width:30px;height:30px;display:grid;place-items:center;border-radius:50%;background:#e45b36;color:#fff;font-weight:900;box-shadow:0 3px 8px rgba(0,0,0,.25)}
+.group-map-layout{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(260px,.65fr);gap:15px}
+.group-leaflet-map{height:470px;border-radius:15px;border:1px solid #dce5ee;z-index:1}
+.group-map-pin{background:transparent;border:0}
+.group-map-pin span{width:34px;height:34px;display:grid;place-items:center;border:3px solid #fff;border-radius:50% 50% 50% 0;background:#e45b36;color:#fff;font-weight:900;box-shadow:0 3px 8px rgba(0,0,0,.28);transform:rotate(-45deg)}
+.group-map-pin span::first-line{transform:rotate(45deg)}
+.map-route-list{max-height:470px;margin:0;padding:8px 8px 8px 38px;overflow:auto;border:1px solid #dce5ee;border-radius:15px;background:#fff}
+.map-route-list li{padding:10px 6px}
+.map-route-list li::marker{color:#e45b36;font-weight:900}
+.map-route-list time{display:block;color:#2f80ed;font-size:12px;font-weight:900}
+.map-route-list strong{display:block;margin:2px 0}
+.map-route-list p{margin:4px 0;color:#64748b;font-size:12px;line-height:1.45}
+.confirmed-banner{margin-bottom:20px;padding:22px;border-radius:17px;background:linear-gradient(135deg,#eafaf1,#eaf4ff);border:2px solid #22a06b;text-align:center}
+.confirmed-banner span{color:#168354;font-weight:900}
+.confirmed-banner h2{margin:7px 0 4px;color:#173d31;font-size:25px}
+.confirmed-banner p{margin:0;color:#526d64}
+.hotpepper-credit{margin:24px 0 0;text-align:center;color:#718096;font-size:12px}
+.group-runoff-banner{margin:0 0 18px;padding:16px 18px;display:flex;flex-direction:column;gap:5px;border:1px solid #f3cf8c;border-radius:14px;background:#fff8e8;color:#8a5700}
+.group-runoff-banner strong{font-size:16px}
+.group-runoff-banner span{font-size:13px;line-height:1.6}
+
+@media(max-width:800px){
+  .budget-choice-grid{grid-template-columns:repeat(2,1fr)}
+  .proposal-choice-grid,.agreement-grid{grid-template-columns:1fr}
+  .proposal-choice-card p{min-height:0}
+  .visual-schedule-card{grid-template-columns:1fr}
+  .visual-schedule-card img{width:100%;height:190px}
+  .group-map-layout{grid-template-columns:1fr}
+  .group-leaflet-map{height:380px}
+  .map-route-list{max-height:none}
+}

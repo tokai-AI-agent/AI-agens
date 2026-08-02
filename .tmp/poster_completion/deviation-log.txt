@@ -1,0 +1,4 @@
+Slide 1: Added research narrative, system flow, implementation summary, and four authentic user-provided UI screenshots inside previously empty content regions.
+Slide 1: Reworked the experience section into a numbered sequence: mode selection, preference input, individual-plan output, and group comparison/voting.
+Slide 1: Replaced the author/university placeholder with a neutral graduation-research descriptor because the user's personal details were not provided.
+Slide 1: Condensed duplicated future-work statements.

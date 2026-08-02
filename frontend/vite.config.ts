@@ -9,6 +9,10 @@ export default defineConfig({
         target: 'http://localhost:4111',
         changeOrigin: true,
       },
+      '/group-trips': {
+        target: 'http://localhost:4111',
+        changeOrigin: true,
+      },
     },
   },
 });

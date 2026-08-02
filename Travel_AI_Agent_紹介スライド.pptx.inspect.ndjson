@@ -1,0 +1,75 @@
+{"kind":"deck","id":"pr/kzxq9n","name":"Deck"}
+{"kind":"layout","layoutId":"0cec9b26-e3ce-470c-96a9-d9853c65606b","name":"Master","type":"master"}
+{"kind":"layout","layoutId":"5ff8b52c-4dc9-457e-843c-8d4b79684ba8","name":"Title Slide","type":"title"}
+{"kind":"slide","id":"sl/rqv44g","slide":1,"title":"TRAVEL AI AGENT","textShapes":3}
+{"kind":"textbox","id":"sh/s3q183il","slide":1,"name":"eyebrow","text":"TRAVEL AI AGENT","textPreview":"TRAVEL AI AGENT","textChars":15,"textLines":1,"bbox":[42,42,450,44]}
+{"kind":"textbox","id":"sh/7ih0zih0","slide":1,"name":"title","text":"「行きたい」が\n2分で旅程になる。","textPreview":"「行きたい」が | 2分で旅程になる。","textChars":17,"textLines":2,"bbox":[42,150,710,230]}
+{"kind":"textbox","id":"sh/6h8j6d0f","slide":1,"name":"subtitle","text":"AIと会話するだけで、時間・食・写真・移動まで。\n旅行計画の「面倒」を、「楽しい」に変えるWebアプリ。","textPreview":"AIと会話するだけで、時間・食・写真・移動まで。 | 旅行計画の「面倒」を、「楽しい」に変えるWebアプリ。","textChars":52,"textLines":2,"bbox":[42,455,660,115]}
+{"kind":"shape","id":"sh/kf6h43ip","slide":1,"name":"accent","bbox":[760,86,8,550]}
+{"kind":"image","id":"im/4nml8z65","slide":1,"name":"","geometry":"roundRect","alt":"actual-plan","bbox":[790,86,440,550]}
+{"kind":"notes","id":"nt/rqv44g","slide":1,"text":"[Sources]\n- ローカルWebアプリの実行画面（本プロジェクト）\n[/Sources]"}
+{"kind":"slide","id":"sl/jqqrnf","slide":2,"title":"旅行計画は、3つの会話で動き出す","textShapes":9}
+{"kind":"textbox","id":"sh/kfuhkbq1","slide":2,"name":"title","text":"旅行計画は、3つの会話で動き出す","textPreview":"旅行計画は、3つの会話で動き出す","textChars":16,"textLines":1,"bbox":[42,36,1196,72]}
+{"kind":"shape","id":"sh/zelgr69g","slide":2,"name":"rule","bbox":[42,350,1196,2]}
+{"kind":"shape","id":"sh/ydczil8v","slide":2,"name":"dot0","bbox":[42,344,12,12]}
+{"kind":"textbox","id":"sh/9knix07i","slide":2,"name":"lab0","text":"01  条件を話す","textPreview":"01  条件を話す","textChars":9,"textLines":1,"bbox":[42,292,320,34]}
+{"kind":"textbox","id":"sh/8jehovqx","slide":2,"name":"body0","text":"京都・1泊2日\n予算5万円\n観光＋グルメ＋写真映え","textPreview":"京都・1泊2日 | 予算5万円 | 観光＋グルメ＋写真映え","textChars":25,"textLines":3,"bbox":[42,400,330,150]}
+{"kind":"shape","id":"sh/7i5gvq9c","slide":2,"name":"dot1","bbox":[450,344,12,12]}
+{"kind":"textbox","id":"sh/mhczml8r","slide":2,"name":"lab1","text":"02  AIが調べる","textPreview":"02  AIが調べる","textChars":10,"textLines":1,"bbox":[450,292,320,34]}
+{"kind":"textbox","id":"sh/pojylwre","slide":2,"name":"body1","text":"Web情報を参照し\nスポット・移動・滞在時間を\nひとつのプランに","textPreview":"Web情報を参照し | スポット・移動・滞在時間を | ひとつのプランに","textChars":32,"textLines":3,"bbox":[450,400,330,150]}
+{"kind":"shape","id":"sh/onahcrqt","slide":2,"name":"dot2","bbox":[858,344,12,12]}
+{"kind":"textbox","id":"sh/yho7q94v","slide":2,"name":"lab2","text":"03  旅程が現れる","textPreview":"03  旅程が現れる","textChars":10,"textLines":1,"bbox":[858,292,320,34]}
+{"kind":"textbox","id":"sh/zix8zelg","slide":2,"name":"body2","text":"タイムライン\nルート地図\nおすすめ情報","textPreview":"タイムライン | ルート地図 | おすすめ情報","textChars":19,"textLines":3,"bbox":[858,400,330,150]}
+{"kind":"textbox","id":"sh/0j6psjm1","slide":2,"name":"caption","text":"入力フォームではなく、会話のテンポで条件が整う。","textPreview":"入力フォームではなく、会話のテンポで条件が整う。","textChars":24,"textLines":1,"bbox":[42,610,900,44]}
+{"kind":"textbox","id":"sh/lkfq1o3m","slide":2,"name":"footer","text":"02","textPreview":"02","textChars":2,"textLines":1,"bbox":[1180,670,60,22]}
+{"kind":"notes","id":"nt/jqqrnf","slide":2,"text":"[Sources]\n- ローカルWebアプリの実行画面（本プロジェクト）\n[/Sources]"}
+{"kind":"slide","id":"sl/sb7i95","slide":3,"title":"「京都に行きたい」の先まで、AIが書き込む","textShapes":4}
+{"kind":"textbox","id":"sh/7e5sfq58","slide":3,"name":"title","text":"「京都に行きたい」の先まで、AIが書き込む","textPreview":"「京都に行きたい」の先まで、AIが書き込む","textChars":21,"textLines":1,"bbox":[42,36,1196,70]}
+{"kind":"textbox","id":"sh/8ze9ov6t","slide":3,"name":"big","text":"王道観光\n×\n写真映え\n×\n京グルメ","textPreview":"王道観光 | × | 写真映え | × | 京グルメ","textChars":18,"textLines":5,"bbox":[42,170,480,310]}
+{"kind":"textbox","id":"sh/t07ah0ne","slide":3,"name":"small","text":"東京発・1泊2日・1人5万円。\nテーマがヒーロー画面になり、\n旅のムードが一目で伝わる。","textPreview":"東京発・1泊2日・1人5万円。 | テーマがヒーロー画面になり、 | 旅のムードが一目で伝わる。","textChars":44,"textLines":3,"bbox":[42,510,520,105]}
+{"kind":"textbox","id":"sh/v2psja5k","slide":3,"name":"footer","text":"03","textPreview":"03","textChars":2,"textLines":1,"bbox":[1180,670,60,22]}
+{"kind":"image","id":"im/vqd8r29o","slide":3,"name":"","geometry":"roundRect","alt":"overview-screen","bbox":[650,125,590,510]}
+{"kind":"notes","id":"nt/sb7i95","slide":3,"text":"[Sources]\n- ローカルWebアプリの実行画面（本プロジェクト）\n[/Sources]"}
+{"kind":"slide","id":"sl/b7mi3f","slide":4,"title":"朝7:30から、旅が“映画”のように進む","textShapes":6}
+{"kind":"textbox","id":"sh/ihsbils3","slide":4,"name":"title","text":"朝7:30から、旅が“映画”のように進む","textPreview":"朝7:30から、旅が“映画”のように進む","textChars":20,"textLines":1,"bbox":[42,36,1196,70]}
+{"kind":"textbox","id":"sh/4jatkva9","slide":4,"name":"callout1","text":"07:30\n東京駅を出発","textPreview":"07:30 | 東京駅を出発","textChars":12,"textLines":2,"bbox":[870,155,310,95]}
+{"kind":"textbox","id":"sh/rmlsfa9k","slide":4,"name":"callout2","text":"10:30\n東寺の五重塔へ","textPreview":"10:30 | 東寺の五重塔へ","textChars":13,"textLines":2,"bbox":[870,285,310,95]}
+{"kind":"textbox","id":"sh/qlcbm5sz","slide":4,"name":"callout3","text":"13:30\n清水寺から産寧坂へ","textPreview":"13:30 | 清水寺から産寧坂へ","textChars":15,"textLines":2,"bbox":[870,415,330,95]}
+{"kind":"textbox","id":"sh/do3ah0rq","slide":4,"name":"caption","text":"時刻・所要時間・移動手段・住所・写真を、\n計画ではなく「体験の流れ」として見せる。","textPreview":"時刻・所要時間・移動手段・住所・写真を、 | 計画ではなく「体験の流れ」として見せる。","textChars":41,"textLines":2,"bbox":[870,555,340,82]}
+{"kind":"textbox","id":"sh/snutova5","slide":4,"name":"footer","text":"04","textPreview":"04","textChars":2,"textLines":1,"bbox":[1180,670,60,22]}
+{"kind":"image","id":"im/kjml4ru5","slide":4,"name":"","geometry":"roundRect","alt":"timeline-screen","bbox":[42,138,780,520]}
+{"kind":"notes","id":"nt/b7mi3f","slide":4,"text":"[Sources]\n- ローカルWebアプリの実行画面（本プロジェクト）\n[/Sources]"}
+{"kind":"slide","id":"sl/u15p6n","slide":5,"title":"9スポットが、地図の上で「行けそう」に変わる","textShapes":6}
+{"kind":"textbox","id":"sh/ri1k3y1o","slide":5,"name":"title","text":"9スポットが、地図の上で「行けそう」に変わる","textPreview":"9スポットが、地図の上で「行けそう」に変わる","textChars":22,"textLines":1,"bbox":[42,36,1196,70]}
+{"kind":"textbox","id":"sh/dkj25oju","slide":5,"name":"stat","text":"9","textPreview":"9","textChars":1,"textLines":1,"bbox":[870,150,260,120]}
+{"kind":"textbox","id":"sh/elsjytkf","slide":5,"name":"stat-label","text":"訪問スポット","textPreview":"訪問スポット","textChars":6,"textLines":1,"bbox":[875,267,300,42]}
+{"kind":"textbox","id":"sh/f61k7y10","slide":5,"name":"detail","text":"1日目と2日目を色分け。\n訪問順と移動の距離感が、\nプランと同じ画面で分かる。","textPreview":"1日目と2日目を色分け。 | 訪問順と移動の距離感が、 | プランと同じ画面で分かる。","textChars":39,"textLines":3,"bbox":[875,340,330,125]}
+{"kind":"textbox","id":"sh/07a10325","slide":5,"name":"meaning","text":"「これ、本当に回れる？」\nという不安を、地図が消す。","textPreview":"「これ、本当に回れる？」 | という不安を、地図が消す。","textChars":26,"textLines":2,"bbox":[875,520,330,90]}
+{"kind":"textbox","id":"sh/18j298jq","slide":5,"name":"footer","text":"05","textPreview":"05","textChars":2,"textLines":1,"bbox":[1180,670,60,22]}
+{"kind":"image","id":"im/58f6xgzm","slide":5,"name":"","geometry":"roundRect","alt":"map-screen","bbox":[42,135,760,520]}
+{"kind":"notes","id":"nt/u15p6n","slide":5,"text":"[Sources]\n- ローカルWebアプリの実行画面／地図: OpenStreetMap contributors\n[/Sources]"}
+{"kind":"slide","id":"sl/c6ws5n","slide":6,"title":"完成が終点じゃない。一言で、旅は何度でも変わる","textShapes":12}
+{"kind":"textbox","id":"sh/up8zm1ov","slide":6,"name":"title","text":"完成が終点じゃない。一言で、旅は何度でも変わる","textPreview":"完成が終点じゃない。一言で、旅は何度でも変わる","textChars":23,"textLines":1,"bbox":[42,36,1196,75]}
+{"kind":"shape","id":"sh/hszixg76","slide":6,"name":"card0","bbox":[42,150,375,365]}
+{"kind":"textbox","id":"sh/grqhob61","slide":6,"name":"num0","text":"01","textPreview":"01","textChars":2,"textLines":1,"bbox":[72,180,70,42]}
+{"kind":"textbox","id":"sh/3u10z6pc","slide":6,"name":"head0","text":"もっとゆっくり","textPreview":"もっとゆっくり","textChars":7,"textLines":1,"bbox":[72,245,315,55]}
+{"kind":"textbox","id":"sh/itszqlor","slide":6,"name":"body0","text":"早朝出発を緩め、\n滞在時間を長く。\n「詰め込みすぎ」を解消。","textPreview":"早朝出発を緩め、 | 滞在時間を長く。 | 「詰め込みすぎ」を解消。","textChars":30,"textLines":3,"bbox":[72,330,315,140]}
+{"kind":"shape","id":"sh/5gji1g7i","slide":6,"name":"card1","bbox":[453,150,375,365]}
+{"kind":"textbox","id":"sh/4fahsb6x","slide":6,"name":"num1","text":"02","textPreview":"02","textChars":2,"textLines":1,"bbox":[483,180,70,42]}
+{"kind":"textbox","id":"sh/ri103qpo","slide":6,"name":"head1","text":"グルメ多めに","textPreview":"グルメ多めに","textChars":6,"textLines":1,"bbox":[483,245,315,55]}
+{"kind":"textbox","id":"sh/qhszulo3","slide":6,"name":"body1","text":"おばんざい、京スイーツ、\nカフェ休憩を追加。\n旅の記憶に味を足す。","textPreview":"おばんざい、京スイーツ、 | カフェ休憩を追加。 | 旅の記憶に味を足す。","textChars":33,"textLines":3,"bbox":[483,330,315,140]}
+{"kind":"shape","id":"sh/kv6pwfqh","slide":6,"name":"card2","bbox":[865,150,375,365]}
+{"kind":"textbox","id":"sh/5wfqpk72","slide":6,"name":"num2","text":"03","textPreview":"03","textChars":2,"textLines":1,"bbox":[895,180,70,42]}
+{"kind":"textbox","id":"sh/ito7u58b","slide":6,"name":"head2","text":"雨の日向けに","textPreview":"雨の日向けに","textChars":6,"textLines":1,"bbox":[895,245,315,55]}
+{"kind":"textbox","id":"sh/jux8napw","slide":6,"name":"body2","text":"屋内で楽しめる文化施設と\n移動の少ないルートへ。\n天気で旅を諦めない。","textPreview":"屋内で楽しめる文化施設と | 移動の少ないルートへ。 | 天気で旅を諦めない。","textChars":35,"textLines":3,"bbox":[895,330,315,140]}
+{"kind":"shape","id":"sh/szqp0f6t","slide":6,"name":"rule","bbox":[42,560,1196,2]}
+{"kind":"textbox","id":"sh/t0zqtk7y","slide":6,"name":"bottom","text":"再生成ではなく、対話を続ける。","textPreview":"再生成ではなく、対話を続ける。","textChars":15,"textLines":1,"bbox":[42,600,900,48]}
+{"kind":"textbox","id":"sh/6xo7ypon","slide":6,"name":"footer","text":"06","textPreview":"06","textChars":2,"textLines":1,"bbox":[1180,670,60,22]}
+{"kind":"notes","id":"nt/c6ws5n","slide":6,"text":"[Sources]\n- ローカルWebアプリの実行画面（本プロジェクト）\n[/Sources]"}
+{"kind":"slide","id":"sl/ohyysj","slide":7,"title":"TRAVEL AI AGENT","textShapes":4}
+{"kind":"textbox","id":"sh/ypcnqh4f","slide":7,"name":"eyebrow","text":"TRAVEL AI AGENT","textPreview":"TRAVEL AI AGENT","textChars":15,"textLines":1,"bbox":[42,42,450,44]}
+{"kind":"textbox","id":"sh/lsnmlc3q","slide":7,"name":"title","text":"旅の予定表ではなく、\n旅の始まりをつくる。","textPreview":"旅の予定表ではなく、 | 旅の始まりをつくる。","textChars":21,"textLines":2,"bbox":[42,170,1000,210]}
+{"kind":"textbox","id":"sh/kre5s7m5","slide":7,"name":"close","text":"会話する。見える。直せる。\nだから、計画の時間から旅行は楽しい。","textPreview":"会話する。見える。直せる。 | だから、計画の時間から旅行は楽しい。","textChars":32,"textLines":2,"bbox":[42,520,650,95]}
+{"kind":"shape","id":"sh/bml4f2lo","slide":7,"name":"blue-block","bbox":[980,0,300,720]}
+{"kind":"textbox","id":"sh/alc3mx43","slide":7,"name":"mark","text":"✈","textPreview":"✈","textChars":1,"textLines":1,"bbox":[1040,220,170,160]}
+{"kind":"notes","id":"nt/ohyysj","slide":7,"text":"[Sources]\n- ローカルWebアプリの実行画面（本プロジェクト）\n[/Sources]"}

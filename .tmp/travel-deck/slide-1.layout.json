@@ -1,0 +1,366 @@
+{
+  "schema": "openai.presentation.layout/v4",
+  "unit": "px",
+  "slide": {
+    "aid": "sl/rqv44g",
+    "id": "rqv44g",
+    "slide": 1,
+    "layoutId": "5ff8b52c-4dc9-457e-843c-8d4b79684ba8",
+    "layoutName": "Title Slide",
+    "layoutType": "title",
+    "masterLayoutId": "0cec9b26-e3ce-470c-96a9-d9853c65606b",
+    "masterLayoutName": "Master",
+    "backgroundColor": "#FFFFFF",
+    "frame": {
+      "left": 0,
+      "top": 0,
+      "width": 1280,
+      "height": 720
+    }
+  },
+  "theme": {
+    "colorSchemeName": "ChatGPT",
+    "colors": {
+      "accent1": "#156082",
+      "accent2": "#E97132",
+      "accent3": "#196B24",
+      "accent4": "#0F9ED5",
+      "accent5": "#A02B93",
+      "accent6": "#4EA72E",
+      "bg1": "#FFFFFF",
+      "bg2": "#000000",
+      "tx1": "#1F1F1F",
+      "tx2": "#FFFFFF",
+      "dk1": "#000000",
+      "lt1": "#FFFFFF",
+      "dk2": "#0E2841",
+      "lt2": "#E8E8E8",
+      "hlink": "#467886",
+      "folHlink": "#96607D"
+    },
+    "typefaces": [
+      "Yu Gothic"
+    ]
+  },
+  "inheritedLayers": [
+    {
+      "scope": "layout",
+      "id": "5ff8b52c-4dc9-457e-843c-8d4b79684ba8",
+      "name": "Title Slide",
+      "type": "title",
+      "parentLayoutId": "0cec9b26-e3ce-470c-96a9-d9853c65606b",
+      "elements": []
+    },
+    {
+      "scope": "master",
+      "id": "0cec9b26-e3ce-470c-96a9-d9853c65606b",
+      "name": "Master",
+      "type": "master",
+      "elements": []
+    }
+  ],
+  "elements": [
+    {
+      "order": 1,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/s3q183il",
+      "id": "1",
+      "name": "eyebrow",
+      "bbox": [
+        42,
+        42,
+        450,
+        44
+      ],
+      "geometry": "rect",
+      "text": "TRAVEL AI AGENT",
+      "textPreview": "TRAVEL AI AGENT",
+      "resolvedFontSize": 25,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 25,
+        "typeface": "Yu Gothic",
+        "color": "#2F80ED",
+        "bold": true,
+        "alignment": "left",
+        "verticalAlignment": "top",
+        "insets": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "TRAVEL AI AGENT"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "TRAVEL AI AGENT",
+          "resolvedTextStyle": {
+            "fontSize": 25,
+            "typeface": "Yu Gothic",
+            "color": "#2F80ED",
+            "bold": true,
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "TRAVEL AI AGENT",
+              "fontSize": 25,
+              "typeface": "Yu Gothic",
+              "color": "#2F80ED",
+              "bold": true,
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 2,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/7ih0zih0",
+      "id": "2",
+      "name": "title",
+      "bbox": [
+        42,
+        150,
+        710,
+        230
+      ],
+      "geometry": "rect",
+      "text": "「行きたい」が\n2分で旅程になる。",
+      "textPreview": "「行きたい」が | 2分で旅程になる。",
+      "resolvedFontSize": 65,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 65,
+        "typeface": "Yu Gothic",
+        "color": "#101820",
+        "bold": true,
+        "alignment": "left",
+        "verticalAlignment": "top",
+        "insets": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      },
+      "textLayout": {
+        "lineCount": 2,
+        "lines": [
+          {
+            "index": 1,
+            "text": "「行きたい」が"
+          },
+          {
+            "index": 2,
+            "text": "2分で旅程になる。"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "「行きたい」が",
+          "resolvedTextStyle": {
+            "fontSize": 65,
+            "typeface": "Yu Gothic",
+            "color": "#101820",
+            "bold": true,
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "「行きたい」が",
+              "fontSize": 65,
+              "typeface": "Yu Gothic",
+              "color": "#101820",
+              "bold": true,
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        },
+        {
+          "index": 2,
+          "text": "2分で旅程になる。",
+          "resolvedTextStyle": {
+            "fontSize": 65,
+            "typeface": "Yu Gothic",
+            "color": "#101820",
+            "bold": true,
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "2分で旅程になる。",
+              "fontSize": 65,
+              "typeface": "Yu Gothic",
+              "color": "#101820",
+              "bold": true,
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 3,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/6h8j6d0f",
+      "id": "3",
+      "name": "subtitle",
+      "bbox": [
+        42,
+        455,
+        660,
+        115
+      ],
+      "geometry": "rect",
+      "text": "AIと会話するだけで、時間・食・写真・移動まで。\n旅行計画の「面倒」を、「楽しい」に変えるWebアプリ。",
+      "textPreview": "AIと会話するだけで、時間・食・写真・移動まで。 | 旅行計画の「面倒」を、「楽しい」に変えるWebアプリ。",
+      "resolvedFontSize": 25,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 25,
+        "typeface": "Yu Gothic",
+        "color": "#66717D",
+        "alignment": "left",
+        "verticalAlignment": "top",
+        "insets": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      },
+      "textLayout": {
+        "lineCount": 2,
+        "lines": [
+          {
+            "index": 1,
+            "text": "AIと会話するだけで、時間・食・写真・移動まで。"
+          },
+          {
+            "index": 2,
+            "text": "旅行計画の「面倒」を、「楽しい」に変えるWebアプリ。"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "AIと会話するだけで、時間・食・写真・移動まで。",
+          "resolvedTextStyle": {
+            "fontSize": 25,
+            "typeface": "Yu Gothic",
+            "color": "#66717D",
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "AIと会話するだけで、時間・食・写真・移動まで。",
+              "fontSize": 25,
+              "typeface": "Yu Gothic",
+              "color": "#66717D",
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        },
+        {
+          "index": 2,
+          "text": "旅行計画の「面倒」を、「楽しい」に変えるWebアプリ。",
+          "resolvedTextStyle": {
+            "fontSize": 25,
+            "typeface": "Yu Gothic",
+            "color": "#66717D",
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "旅行計画の「面倒」を、「楽しい」に変えるWebアプリ。",
+              "fontSize": 25,
+              "typeface": "Yu Gothic",
+              "color": "#66717D",
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 4,
+      "kind": "image",
+      "scope": "slide",
+      "aid": "im/4nml8z65",
+      "id": "4",
+      "bbox": [
+        790,
+        86,
+        440,
+        550
+      ],
+      "geometry": "roundRect",
+      "alt": "actual-plan",
+      "contentType": "image/jpeg",
+      "imageFit": "cover",
+      "imageMask": {
+        "geometry": "roundRect",
+        "adjustmentList": [
+          {
+            "name": "adj",
+            "formula": "val 2727"
+          }
+        ]
+      },
+      "asset": {
+        "assetId": "b3cb5f40-eb6d-4020-9914-7e6c6837a2b7",
+        "contentType": "image/jpeg",
+        "byteLength": 97396
+      }
+    },
+    {
+      "order": 5,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/kf6h43ip",
+      "id": "5",
+      "name": "accent",
+      "bbox": [
+        760,
+        86,
+        8,
+        550
+      ],
+      "geometry": "rect",
+      "fillColor": "#56CCF2",
+      "lineWidth": 0
+    }
+  ],
+  "composeRuns": []
+}

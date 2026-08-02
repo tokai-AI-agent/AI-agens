@@ -1,0 +1,891 @@
+{
+  "schema": "openai.presentation.layout/v4",
+  "unit": "px",
+  "slide": {
+    "aid": "sl/jqqrnf",
+    "id": "jqqrnf",
+    "slide": 2,
+    "layoutId": "5ff8b52c-4dc9-457e-843c-8d4b79684ba8",
+    "layoutName": "Title Slide",
+    "layoutType": "title",
+    "masterLayoutId": "0cec9b26-e3ce-470c-96a9-d9853c65606b",
+    "masterLayoutName": "Master",
+    "backgroundColor": "#FFFFFF",
+    "frame": {
+      "left": 0,
+      "top": 0,
+      "width": 1280,
+      "height": 720
+    }
+  },
+  "theme": {
+    "colorSchemeName": "ChatGPT",
+    "colors": {
+      "accent1": "#156082",
+      "accent2": "#E97132",
+      "accent3": "#196B24",
+      "accent4": "#0F9ED5",
+      "accent5": "#A02B93",
+      "accent6": "#4EA72E",
+      "bg1": "#FFFFFF",
+      "bg2": "#000000",
+      "tx1": "#1F1F1F",
+      "tx2": "#FFFFFF",
+      "dk1": "#000000",
+      "lt1": "#FFFFFF",
+      "dk2": "#0E2841",
+      "lt2": "#E8E8E8",
+      "hlink": "#467886",
+      "folHlink": "#96607D"
+    },
+    "typefaces": [
+      "Yu Gothic"
+    ]
+  },
+  "inheritedLayers": [
+    {
+      "scope": "layout",
+      "id": "5ff8b52c-4dc9-457e-843c-8d4b79684ba8",
+      "name": "Title Slide",
+      "type": "title",
+      "parentLayoutId": "0cec9b26-e3ce-470c-96a9-d9853c65606b",
+      "elements": []
+    },
+    {
+      "scope": "master",
+      "id": "0cec9b26-e3ce-470c-96a9-d9853c65606b",
+      "name": "Master",
+      "type": "master",
+      "elements": []
+    }
+  ],
+  "elements": [
+    {
+      "order": 1,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/kfuhkbq1",
+      "id": "1",
+      "name": "title",
+      "bbox": [
+        42,
+        36,
+        1196,
+        72
+      ],
+      "geometry": "rect",
+      "text": "旅行計画は、3つの会話で動き出す",
+      "textPreview": "旅行計画は、3つの会話で動き出す",
+      "resolvedFontSize": 39,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 39,
+        "typeface": "Yu Gothic",
+        "color": "#101820",
+        "bold": true,
+        "alignment": "left",
+        "verticalAlignment": "top",
+        "insets": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "旅行計画は、3つの会話で動き出す"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "旅行計画は、3つの会話で動き出す",
+          "resolvedTextStyle": {
+            "fontSize": 39,
+            "typeface": "Yu Gothic",
+            "color": "#101820",
+            "bold": true,
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "旅行計画は、3つの会話で動き出す",
+              "fontSize": 39,
+              "typeface": "Yu Gothic",
+              "color": "#101820",
+              "bold": true,
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 2,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/zelgr69g",
+      "id": "2",
+      "name": "rule",
+      "bbox": [
+        42,
+        350,
+        1196,
+        2
+      ],
+      "geometry": "rect",
+      "fillColor": "#101820",
+      "lineWidth": 0
+    },
+    {
+      "order": 3,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/ydczil8v",
+      "id": "3",
+      "name": "dot0",
+      "bbox": [
+        42,
+        344,
+        12,
+        12
+      ],
+      "geometry": "rect",
+      "fillColor": "#2F80ED",
+      "lineWidth": 0
+    },
+    {
+      "order": 4,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/9knix07i",
+      "id": "4",
+      "name": "lab0",
+      "bbox": [
+        42,
+        292,
+        320,
+        34
+      ],
+      "geometry": "rect",
+      "text": "01  条件を話す",
+      "textPreview": "01  条件を話す",
+      "resolvedFontSize": 21,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 21,
+        "typeface": "Yu Gothic",
+        "color": "#2F80ED",
+        "bold": true,
+        "alignment": "left",
+        "verticalAlignment": "top",
+        "insets": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "01  条件を話す"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "01  条件を話す",
+          "resolvedTextStyle": {
+            "fontSize": 21,
+            "typeface": "Yu Gothic",
+            "color": "#2F80ED",
+            "bold": true,
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "01  条件を話す",
+              "fontSize": 21,
+              "typeface": "Yu Gothic",
+              "color": "#2F80ED",
+              "bold": true,
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 5,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/8jehovqx",
+      "id": "5",
+      "name": "body0",
+      "bbox": [
+        42,
+        400,
+        330,
+        150
+      ],
+      "geometry": "rect",
+      "text": "京都・1泊2日\n予算5万円\n観光＋グルメ＋写真映え",
+      "textPreview": "京都・1泊2日 | 予算5万円 | 観光＋グルメ＋写真映え",
+      "resolvedFontSize": 28,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 28,
+        "typeface": "Yu Gothic",
+        "color": "#101820",
+        "alignment": "left",
+        "verticalAlignment": "top",
+        "insets": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      },
+      "textLayout": {
+        "lineCount": 3,
+        "lines": [
+          {
+            "index": 1,
+            "text": "京都・1泊2日"
+          },
+          {
+            "index": 2,
+            "text": "予算5万円"
+          },
+          {
+            "index": 3,
+            "text": "観光＋グルメ＋写真映え"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "京都・1泊2日",
+          "resolvedTextStyle": {
+            "fontSize": 28,
+            "typeface": "Yu Gothic",
+            "color": "#101820",
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "京都・1泊2日",
+              "fontSize": 28,
+              "typeface": "Yu Gothic",
+              "color": "#101820",
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        },
+        {
+          "index": 2,
+          "text": "予算5万円",
+          "resolvedTextStyle": {
+            "fontSize": 28,
+            "typeface": "Yu Gothic",
+            "color": "#101820",
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "予算5万円",
+              "fontSize": 28,
+              "typeface": "Yu Gothic",
+              "color": "#101820",
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        },
+        {
+          "index": 3,
+          "text": "観光＋グルメ＋写真映え",
+          "resolvedTextStyle": {
+            "fontSize": 28,
+            "typeface": "Yu Gothic",
+            "color": "#101820",
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "観光＋グルメ＋写真映え",
+              "fontSize": 28,
+              "typeface": "Yu Gothic",
+              "color": "#101820",
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 6,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/7i5gvq9c",
+      "id": "6",
+      "name": "dot1",
+      "bbox": [
+        450,
+        344,
+        12,
+        12
+      ],
+      "geometry": "rect",
+      "fillColor": "#2F80ED",
+      "lineWidth": 0
+    },
+    {
+      "order": 7,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/mhczml8r",
+      "id": "7",
+      "name": "lab1",
+      "bbox": [
+        450,
+        292,
+        320,
+        34
+      ],
+      "geometry": "rect",
+      "text": "02  AIが調べる",
+      "textPreview": "02  AIが調べる",
+      "resolvedFontSize": 21,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 21,
+        "typeface": "Yu Gothic",
+        "color": "#2F80ED",
+        "bold": true,
+        "alignment": "left",
+        "verticalAlignment": "top",
+        "insets": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "02  AIが調べる"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "02  AIが調べる",
+          "resolvedTextStyle": {
+            "fontSize": 21,
+            "typeface": "Yu Gothic",
+            "color": "#2F80ED",
+            "bold": true,
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "02  AIが調べる",
+              "fontSize": 21,
+              "typeface": "Yu Gothic",
+              "color": "#2F80ED",
+              "bold": true,
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 8,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/pojylwre",
+      "id": "8",
+      "name": "body1",
+      "bbox": [
+        450,
+        400,
+        330,
+        150
+      ],
+      "geometry": "rect",
+      "text": "Web情報を参照し\nスポット・移動・滞在時間を\nひとつのプランに",
+      "textPreview": "Web情報を参照し | スポット・移動・滞在時間を | ひとつのプランに",
+      "resolvedFontSize": 28,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 28,
+        "typeface": "Yu Gothic",
+        "color": "#101820",
+        "alignment": "left",
+        "verticalAlignment": "top",
+        "insets": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      },
+      "textLayout": {
+        "lineCount": 4,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Web情報を参照し"
+          },
+          {
+            "index": 2,
+            "text": "スポット・移動・滞在時"
+          },
+          {
+            "index": 3,
+            "text": "間を"
+          },
+          {
+            "index": 4,
+            "text": "ひとつのプランに"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Web情報を参照し",
+          "resolvedTextStyle": {
+            "fontSize": 28,
+            "typeface": "Yu Gothic",
+            "color": "#101820",
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Web情報を参照し",
+              "fontSize": 28,
+              "typeface": "Yu Gothic",
+              "color": "#101820",
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        },
+        {
+          "index": 2,
+          "text": "スポット・移動・滞在時間を",
+          "resolvedTextStyle": {
+            "fontSize": 28,
+            "typeface": "Yu Gothic",
+            "color": "#101820",
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "スポット・移動・滞在時間を",
+              "fontSize": 28,
+              "typeface": "Yu Gothic",
+              "color": "#101820",
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        },
+        {
+          "index": 3,
+          "text": "ひとつのプランに",
+          "resolvedTextStyle": {
+            "fontSize": 28,
+            "typeface": "Yu Gothic",
+            "color": "#101820",
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "ひとつのプランに",
+              "fontSize": 28,
+              "typeface": "Yu Gothic",
+              "color": "#101820",
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 9,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/onahcrqt",
+      "id": "9",
+      "name": "dot2",
+      "bbox": [
+        858,
+        344,
+        12,
+        12
+      ],
+      "geometry": "rect",
+      "fillColor": "#2F80ED",
+      "lineWidth": 0
+    },
+    {
+      "order": 10,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/yho7q94v",
+      "id": "10",
+      "name": "lab2",
+      "bbox": [
+        858,
+        292,
+        320,
+        34
+      ],
+      "geometry": "rect",
+      "text": "03  旅程が現れる",
+      "textPreview": "03  旅程が現れる",
+      "resolvedFontSize": 21,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 21,
+        "typeface": "Yu Gothic",
+        "color": "#2F80ED",
+        "bold": true,
+        "alignment": "left",
+        "verticalAlignment": "top",
+        "insets": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "03  旅程が現れる"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "03  旅程が現れる",
+          "resolvedTextStyle": {
+            "fontSize": 21,
+            "typeface": "Yu Gothic",
+            "color": "#2F80ED",
+            "bold": true,
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "03  旅程が現れる",
+              "fontSize": 21,
+              "typeface": "Yu Gothic",
+              "color": "#2F80ED",
+              "bold": true,
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 11,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/zix8zelg",
+      "id": "11",
+      "name": "body2",
+      "bbox": [
+        858,
+        400,
+        330,
+        150
+      ],
+      "geometry": "rect",
+      "text": "タイムライン\nルート地図\nおすすめ情報",
+      "textPreview": "タイムライン | ルート地図 | おすすめ情報",
+      "resolvedFontSize": 28,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 28,
+        "typeface": "Yu Gothic",
+        "color": "#101820",
+        "bold": true,
+        "alignment": "left",
+        "verticalAlignment": "top",
+        "insets": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      },
+      "textLayout": {
+        "lineCount": 3,
+        "lines": [
+          {
+            "index": 1,
+            "text": "タイムライン"
+          },
+          {
+            "index": 2,
+            "text": "ルート地図"
+          },
+          {
+            "index": 3,
+            "text": "おすすめ情報"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "タイムライン",
+          "resolvedTextStyle": {
+            "fontSize": 28,
+            "typeface": "Yu Gothic",
+            "color": "#101820",
+            "bold": true,
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "タイムライン",
+              "fontSize": 28,
+              "typeface": "Yu Gothic",
+              "color": "#101820",
+              "bold": true,
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        },
+        {
+          "index": 2,
+          "text": "ルート地図",
+          "resolvedTextStyle": {
+            "fontSize": 28,
+            "typeface": "Yu Gothic",
+            "color": "#101820",
+            "bold": true,
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "ルート地図",
+              "fontSize": 28,
+              "typeface": "Yu Gothic",
+              "color": "#101820",
+              "bold": true,
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        },
+        {
+          "index": 3,
+          "text": "おすすめ情報",
+          "resolvedTextStyle": {
+            "fontSize": 28,
+            "typeface": "Yu Gothic",
+            "color": "#101820",
+            "bold": true,
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "おすすめ情報",
+              "fontSize": 28,
+              "typeface": "Yu Gothic",
+              "color": "#101820",
+              "bold": true,
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 12,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/0j6psjm1",
+      "id": "12",
+      "name": "caption",
+      "bbox": [
+        42,
+        610,
+        900,
+        44
+      ],
+      "geometry": "rect",
+      "text": "入力フォームではなく、会話のテンポで条件が整う。",
+      "textPreview": "入力フォームではなく、会話のテンポで条件が整う。",
+      "resolvedFontSize": 23,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 23,
+        "typeface": "Yu Gothic",
+        "color": "#66717D",
+        "alignment": "left",
+        "verticalAlignment": "top",
+        "insets": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "入力フォームではなく、会話のテンポで条件が整う。"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "入力フォームではなく、会話のテンポで条件が整う。",
+          "resolvedTextStyle": {
+            "fontSize": 23,
+            "typeface": "Yu Gothic",
+            "color": "#66717D",
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "入力フォームではなく、会話のテンポで条件が整う。",
+              "fontSize": 23,
+              "typeface": "Yu Gothic",
+              "color": "#66717D",
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 13,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/lkfq1o3m",
+      "id": "13",
+      "name": "footer",
+      "bbox": [
+        1180,
+        670,
+        60,
+        22
+      ],
+      "geometry": "rect",
+      "text": "02",
+      "textPreview": "02",
+      "resolvedFontSize": 14,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 14,
+        "typeface": "Yu Gothic",
+        "color": "#66717D",
+        "alignment": "right",
+        "verticalAlignment": "top",
+        "insets": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "02"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "02",
+          "resolvedTextStyle": {
+            "fontSize": 14,
+            "typeface": "Yu Gothic",
+            "color": "#66717D",
+            "alignment": "right"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "02",
+              "fontSize": 14,
+              "typeface": "Yu Gothic",
+              "color": "#66717D",
+              "alignment": "right"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    }
+  ],
+  "composeRuns": []
+}
