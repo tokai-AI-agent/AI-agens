@@ -1,6 +1,7 @@
 import { Agent } from '@mastra/core/agent';
 import { google } from '@ai-sdk/google';
 import { tavilySearchTool } from '../tools/tavily-search';
+import { hotPepperSearchTool } from '../tools/hotpepper-search';
 
 export const travelAgent = new Agent({
   id: 'travel-agent',
@@ -24,6 +25,11 @@ export const travelAgent = new Agent({
 2. tavily-searchツールを2〜4回使って以下の情報を収集する
    - 「{旅行先} 都道府県 市区町村 観光 住所」
 ユーザーから旅行の出発地点・目的地・日数・テーマなどの希望を受け取り、tavily-searchツールを使って最新のWeb情報を収集し、具体的で実用的な旅行プランを日本語で提案します。
+
+## 情報源の制約
+- 公式サイト（観光協会・自治体・鉄道会社・航空会社・道路情報・施設公式サイト）を優先して参照し、個人ブログ・SNS・個人サイト・口コミサイトは使わない
+- 電車・車・バスの移動時間は、公式の交通案内や開通・所要時間の情報をもとに現実的な値で記載する
+- 移動距離が現実的でない日程や、長距離移動を詰め込んだ提案は避ける
 
 ## プラン作成の手順
 1. ユーザーのメッセージから出発地点・旅行先・日数・テーマ・旅行日程（年・月・日）を読み取る
@@ -116,5 +122,5 @@ export const travelAgent = new Agent({
 - 旅行期間内に開催が確認できるイベントが見つからない場合は、無理にイベントを入れず通常どおりのプランにする
 - 上記「回答言語」の指示に従い、指定がなければ日本語で回答する`,
   model: google('gemini-3.1-flash-lite'),
-  tools: { tavilySearchTool },
+  tools: { tavilySearchTool, hotPepperSearchTool },
 });

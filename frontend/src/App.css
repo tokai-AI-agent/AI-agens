@@ -111,6 +111,30 @@ button {
   gap: 8px;
 }
 
+.new-chat-button {
+  width: 100%;
+  min-height: 44px;
+  padding: 0 14px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: linear-gradient(135deg, #2f80ed, #56ccf2);
+  color: #ffffff;
+  cursor: pointer;
+  box-shadow: 0 10px 22px rgba(47, 128, 237, 0.2);
+}
+
+.new-chat-button span {
+  font-size: 20px;
+  line-height: 1;
+}
+
+.new-chat-button b {
+  font-size: 13px;
+}
+
 .nav-button {
   width: 100%;
   min-height: 44px;
@@ -123,6 +147,10 @@ button {
   gap: 12px;
   text-align: left;
   cursor: pointer;
+}
+
+.nav-button {
+  position: relative;
 }
 
 .nav-button b {
@@ -227,6 +255,23 @@ button {
   gap: 10px;
 }
 
+.new-chat-button--header {
+  width: auto;
+  min-height: 42px;
+  margin: 0;
+  padding: 0 16px;
+  flex: 0 0 auto;
+}
+
+.new-chat-button--header span {
+  font-size: 20px;
+  line-height: 1;
+}
+
+.new-chat-button--header b {
+  display: inline;
+}
+
 .ghost-action,
 .icon-action {
   min-height: 42px;
@@ -251,6 +296,34 @@ button {
   color: #a7b0bf;
   background: #f4f7fb;
   box-shadow: none;
+}
+
+.map-spot-popup {
+  min-width: 150px;
+}
+
+.map-spot-popup > span,
+.map-spot-popup > strong,
+.map-spot-popup > small {
+  display: block;
+}
+
+.map-spot-popup > span {
+  margin-bottom: 4px;
+  color: #2f80ed;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.map-spot-popup > strong {
+  color: #172033;
+  font-size: 15px;
+}
+
+.map-spot-popup > small {
+  margin-top: 6px;
+  color: #64748b;
+  line-height: 1.45;
 }
 
 .icon-action {
@@ -1754,6 +1827,40 @@ button {
     padding: 0;
   }
 
+  .new-chat-button {
+    width: 56px;
+    padding: 0;
+  }
+
+  .new-chat-button b {
+    display: none;
+  }
+
+  .nav-button::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    z-index: 100;
+    left: calc(100% + 10px);
+    top: 50%;
+    padding: 7px 10px;
+    border-radius: 7px;
+    background: #1f2937;
+    color: #ffffff;
+    font-size: 12px;
+    font-weight: 700;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(-50%) translateX(-4px);
+    transition: opacity 0.15s ease, transform 0.15s ease;
+  }
+
+  .nav-button:hover::after,
+  .nav-button:focus-visible::after {
+    opacity: 1;
+    transform: translateY(-50%) translateX(0);
+  }
+
   .travel-note {
     width: 56px;
     padding: 8px;
@@ -1798,6 +1905,16 @@ button {
 
   .ghost-action {
     display: none;
+  }
+
+  .new-chat-button--header {
+    display: inline-flex;
+    width: auto;
+    padding: 0 12px;
+  }
+
+  .new-chat-button--header b {
+    display: inline;
   }
 
   .mobile-tabs {
@@ -2211,179 +2328,6 @@ button {
   cursor: pointer;
 }
 
-.health-page-card {
-  text-align: left;
-  max-width: 560px;
-  margin: 0 auto;
-}
-
-.health-page-card > .top-option-icon,
-.health-page-card > h1,
-.health-page-card > .top-page-subheading {
-  text-align: center;
-  display: block;
-}
-
-.health-back-button {
-  margin-bottom: 16px;
-  background: #f3f4f6;
-  color: #1f2937;
-}
-
-.health-upload-section {
-  margin-top: 24px;
-  padding: 24px;
-  border: 1px dashed #cbd5e1;
-  border-radius: 16px;
-  background: #f9fafb;
-  text-align: center;
-}
-
-.health-upload-section h2 {
-  margin: 0 0 16px;
-  font-size: 15px;
-}
-
-.health-file-input {
-  display: none;
-}
-
-.health-upload-button {
-  min-height: 44px;
-  padding: 0 24px;
-  border-radius: 999px;
-  border: 1px solid #2f80ed;
-  background: #ffffff;
-  color: #2f80ed;
-  font-size: 14px;
-  font-weight: 800;
-  cursor: pointer;
-}
-
-.health-file-status {
-  margin: 12px 0 0;
-  color: #6b7280;
-  font-size: 13px;
-}
-
-.health-truncated-notice {
-  margin: 8px 0 0;
-  color: #b45309;
-  font-size: 12px;
-}
-
-.health-format-list {
-  margin-top: 16px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 14px;
-  font-size: 13px;
-  color: #374151;
-}
-
-.health-format-label {
-  color: #6b7280;
-}
-
-.health-analyze-button {
-  width: 100%;
-  margin-top: 24px;
-  min-height: 48px;
-  border-radius: 999px;
-  background: linear-gradient(135deg, #2f80ed, #56ccf2);
-  color: #ffffff;
-  font-size: 15px;
-  font-weight: 800;
-  cursor: pointer;
-}
-
-.health-analyze-button:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.health-result {
-  margin-top: 28px;
-  padding-top: 20px;
-  border-top: 1px solid #e5e7eb;
-}
-
-.health-result h2 {
-  margin: 0 0 12px;
-  font-size: 17px;
-}
-
-.health-result h3 {
-  margin: 20px 0 10px;
-  font-size: 15px;
-}
-
-.health-score-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-  gap: 12px;
-  margin-bottom: 24px;
-}
-
-.health-score-item {
-  padding: 14px 16px;
-  border-radius: 14px;
-  background: #f9fafb;
-  border: 1px solid #e5e7eb;
-}
-
-.health-score-item span {
-  display: block;
-  color: #6b7280;
-  font-size: 12px;
-  margin-bottom: 4px;
-}
-
-.health-score-item strong {
-  font-size: 20px;
-  color: #1f2937;
-}
-
-.health-score-item--highlight strong {
-  color: #2f80ed;
-}
-
-.health-suitability-list {
-  display: grid;
-  gap: 10px;
-  margin-bottom: 24px;
-}
-
-.health-suitability-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-}
-
-.health-suitability-stars {
-  color: #f2994a;
-  letter-spacing: 2px;
-  font-size: 15px;
-}
-
-.health-suitability-label {
-  font-size: 14px;
-  color: #374151;
-}
-
-.health-ai-comment {
-  padding: 16px 18px;
-  border-radius: 14px;
-  background: linear-gradient(135deg, rgba(47, 128, 237, 0.08), rgba(86, 204, 242, 0.08));
-  border: 1px solid rgba(47, 128, 237, 0.18);
-  font-size: 14px;
-  line-height: 1.7;
-  color: #1f2937;
-  white-space: pre-wrap;
-}
-
 .saved-plan-delete {
   background: #fff1f2;
   color: #be123c;
@@ -2475,6 +2419,49 @@ button {
   border: 1px solid #e5e7eb;
   border-radius: 16px;
   padding: 18px;
+}
+
+.calendar-weather-search {
+  margin-bottom: 12px;
+  padding: 14px;
+  border: 1px solid #dbeafe;
+  border-radius: 12px;
+  background: #f0f9ff;
+}
+
+.calendar-weather-search > label {
+  display: block;
+  margin-bottom: 8px;
+  color: #1f2937;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.calendar-weather-search > div {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 10px;
+  border: 1px solid #bfdbfe;
+  border-radius: 9px;
+  background: #ffffff;
+}
+
+.calendar-weather-search input {
+  width: 100%;
+  min-width: 0;
+  padding: 10px 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+}
+
+.calendar-weather-search small {
+  display: block;
+  margin-top: 8px;
+  color: #64748b;
+  font-size: 11px;
+  line-height: 1.5;
 }
 
 .calv-calendar__head {

@@ -1,12 +1,12 @@
 import { useEffect, useMemo, useState } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, Polyline, useMap } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, Polyline, Tooltip, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png';
 import markerIcon from 'leaflet/dist/images/marker-icon.png';
 import markerShadow from 'leaflet/dist/images/marker-shadow.png';
 import './App.css';
-import HealthAnalysisPage from './HealthAnalysisPage';
+import { GroupTripExperience } from './GroupTrip';
 import {
   AGENT_LANGUAGE_LABEL,
   LANGUAGES,
@@ -70,7 +70,7 @@ type TravelConditionInput = {
 
 type PlanTab = 'schedule' | 'map' | 'tips';
 type MobileTab = 'chat' | 'plan' | 'map';
-type AppView = 'top' | 'travel' | 'health';
+type AppView = 'top' | 'travel' | 'group';
 
 const initialConditions: TravelConditionInput = {
   destination: '',
@@ -486,6 +486,8 @@ ${extraRequest ? `- 追加要望: ${extraRequest}` : ''}
 ## 出力ルール
 - モデルプランは出発地点（${conditions.departure}）からの移動を起点に組み立ててください。1日目の最初は出発地点から行先までの移動（出発時刻・交通手段・所要時間の目安）にしてください。
 - 出発地点から行先までのアクセス（新幹線・飛行機・車・在来線など）と所要時間・料金目安を「移動・注意点」に必ず記載してください。
+- 公式サイト（観光協会・自治体・鉄道会社・航空会社・道路情報・施設公式サイト）を優先して参照し、個人ブログ・SNS・個人サイト・口コミサイトは使わないでください。
+- 電車・車・バスなどの移動時間は、公式の交通案内や現実的な所要時間をもとに記載し、無理な遠距離移動を詰め込まないでください。
 - モデルプランは「- 09:00 - 行先名：一言コメント / 滞在目安：... / 移動：... / 住所：... / 画像URL：https://...」の形式で、1日あたり6〜9件書いてください。
 - 一言コメントは、その場所で何が楽しめるか、またはなぜ条件に合うかを短く書いてください。
 - 旅行先（${conditions.destination}）の都道府県・市区町村を検索結果で確認してから、候補スポットを選んでください。
@@ -765,6 +767,7 @@ function CalendarView({
   const [selectedDay, setSelectedDay] = useState<Date>(() =>
     firstUpcoming ? firstUpcoming.start : today,
   );
+  const [weatherPlaceInput, setWeatherPlaceInput] = useState(() => defaultPlace || '東京');
 
   const monthLabel = new Intl.DateTimeFormat(LOCALE_MAP[language], {
     year: 'numeric',
@@ -800,10 +803,14 @@ function CalendarView({
     setViewMonth(new Date(trip.start.getFullYear(), trip.start.getMonth(), 1));
   };
 
-  // 選択した日に旅行が無くても天気は表示したいので、その日の旅行先→直近の予定の旅行先→
-  // 現在チャットで入力中の目的地、の順にフォールバックする。
-  const weatherPlace =
-    selectedTrips[0]?.plan.conditions.destination || firstUpcoming?.plan.conditions.destination || defaultPlace;
+  // 天気の場所はユーザーが明示的に選択した値を優先し、未選択時は東京を表示する。
+  const weatherPlace = weatherPlaceInput.trim() || '東京';
+  const weatherPlaceOptions = useMemo(() => {
+    const destinations = plans
+      .map(plan => plan.conditions?.destination)
+      .filter((value): value is string => Boolean(value && value.trim()));
+    return Array.from(new Set(destinations));
+  }, [plans]);
 
   return (
     <div
@@ -1004,6 +1011,23 @@ function CalendarView({
               )}
             </div>
 
+            <div className="calendar-weather-search">
+              <label htmlFor="calendar-weather-place">天気を表示する地域</label>
+              <div>
+                <span aria-hidden="true">📍</span>
+                <input
+                  id="calendar-weather-place"
+                  list="calendar-weather-options"
+                  value={weatherPlaceInput}
+                  onChange={event => setWeatherPlaceInput(event.target.value)}
+                  placeholder="例：東京、京都、大阪"
+                />
+                <datalist id="calendar-weather-options">
+                  {weatherPlaceOptions.map(option => <option value={option} key={option} />)}
+                </datalist>
+              </div>
+              <small>旅行の予定がない日でも、選択した日付の天気を確認できます。</small>
+            </div>
             <WeatherCard language={language} place={weatherPlace} date={selectedDay} />
           </aside>
         </div>
@@ -1045,7 +1069,14 @@ export default function App() {
   // stateを唯一の正としておけば、保存/削除のたびに個別に書き込む必要がなく整合性が崩れない。
   useEffect(() => {
     persistSavedPlans(savedPlans);
+    window.dispatchEvent(new Event('travel-agent:saved-plans-updated'));
   }, [savedPlans]);
+
+  useEffect(() => {
+    const refresh = () => setSavedPlans(loadSavedPlans());
+    window.addEventListener('travel-agent:saved-plans-updated', refresh);
+    return () => window.removeEventListener('travel-agent:saved-plans-updated', refresh);
+  }, []);
 
   // 言語選択が変わるたびにlocalStorageへ同期する。
   useEffect(() => {
@@ -1310,13 +1341,13 @@ export default function App() {
       <TopPage
         language={language}
         onSelectTravel={() => setView('travel')}
-        onSelectHealth={() => setView('health')}
+        onSelectGroup={() => setView('group')}
       />
     );
   }
 
-  if (view === 'health') {
-    return <HealthAnalysisPage language={language} onBack={() => setView('top')} />;
+  if (view === 'group') {
+    return <GroupTripExperience onBack={() => setView('top')} />;
   }
 
   return (
@@ -1334,6 +1365,7 @@ export default function App() {
         <Header
           language={language}
           planGenerated={planGenerated}
+          onNewChat={startNewChat}
           onSavePlan={handleSavePlan}
           onSharePlan={handleSharePlan}
         />
@@ -1410,11 +1442,11 @@ export default function App() {
 function TopPage({
   language,
   onSelectTravel,
-  onSelectHealth,
+  onSelectGroup,
 }: {
   language: Language;
   onSelectTravel: () => void;
-  onSelectHealth: () => void;
+  onSelectGroup: () => void;
 }) {
   return (
     <div className="top-page">
@@ -1423,18 +1455,17 @@ function TopPage({
         <h1>{t(language, 'topPageHeading')}</h1>
         <p className="top-page-subheading">{t(language, 'topPageSubheading')}</p>
         <div className="top-page-options">
-          <button className="top-option" type="button" onClick={onSelectHealth}>
-            <span className="top-option-badge">{t(language, 'topHealthBadge')}</span>
-            <span className="top-option-icon" aria-hidden="true">🩺</span>
-            <h2>{t(language, 'topHealthTitle')}</h2>
-            <p>{t(language, 'topHealthDesc')}</p>
-            <span className="top-option-button">{t(language, 'topSelectButton')}</span>
-          </button>
           <button className="top-option" type="button" onClick={onSelectTravel}>
             <span className="top-option-icon" aria-hidden="true">✈</span>
             <h2>{t(language, 'topTravelTitle')}</h2>
             <p>{t(language, 'topTravelDesc')}</p>
             <span className="top-option-button">{t(language, 'topSelectButton')}</span>
+          </button>
+          <button className="top-option" type="button" onClick={onSelectGroup}>
+            <span className="top-option-icon" aria-hidden="true">👥</span>
+            <h2>グループ旅行</h2>
+            <p>2〜5人で希望を共有し、AIの提案を見ながら投票・再調整できます。</p>
+            <span className="top-option-button">グループ旅行を選ぶ</span>
           </button>
         </div>
       </div>
@@ -1445,11 +1476,13 @@ function TopPage({
 function Header({
   language,
   planGenerated,
+  onNewChat,
   onSavePlan,
   onSharePlan,
 }: {
   language: Language;
   planGenerated: boolean;
+  onNewChat: () => void;
   onSavePlan: () => void;
   onSharePlan: () => void;
 }) {
@@ -1463,6 +1496,7 @@ function Header({
       <ActionButtons
         language={language}
         planGenerated={planGenerated}
+        onNewChat={onNewChat}
         onSavePlan={onSavePlan}
         onSharePlan={onSharePlan}
       />
@@ -1473,16 +1507,22 @@ function Header({
 function ActionButtons({
   language,
   planGenerated,
+  onNewChat,
   onSavePlan,
   onSharePlan,
 }: {
   language: Language;
   planGenerated: boolean;
+  onNewChat: () => void;
   onSavePlan: () => void;
   onSharePlan: () => void;
 }) {
   return (
     <div className="header-actions">
+      <button className="new-chat-button new-chat-button--header" type="button" onClick={onNewChat}>
+        <span aria-hidden="true">＋</span>
+        <b>{language === 'ja' ? '新規チャット' : t(language, 'navChat')}</b>
+      </button>
       {/* プラン未生成のときは保存・共有できないので無効化する */}
       <button className="ghost-action" type="button" disabled={!planGenerated} onClick={onSavePlan}>
         <span>💾</span>
@@ -1491,11 +1531,6 @@ function ActionButtons({
       <button className="ghost-action" type="button" disabled={!planGenerated} onClick={onSharePlan}>
         <span>↗</span>
         {t(language, 'actionShare')}
-      </button>
-      <button className="icon-action" type="button" aria-label={t(language, 'actionMenuAria')}>
-        <span />
-        <span />
-        <span />
       </button>
     </div>
   );
@@ -1544,11 +1579,8 @@ function Sidebar({
 }) {
   const items: [string, string][] = [
     [t(language, 'navChat'), '💬'],
-    [t(language, 'navPlan'), '🗓'],
-    [t(language, 'navMap'), '🗺'],
     [t(language, 'navSaved'), '💾'],
     [t(language, 'navCalendar'), '📅'],
-    [t(language, 'navFavorite'), '♡'],
     [t(language, 'navSettings'), '⚙'],
   ];
 
@@ -1576,6 +1608,9 @@ function Sidebar({
               className={`nav-button ${isChat ? 'nav-button--active' : ''}`}
               type="button"
               onClick={onClick}
+              aria-label={label}
+              title={label}
+              data-tooltip={label}
             >
               <span>{icon}</span>
               <b>{label}</b>
@@ -3512,10 +3547,15 @@ function MapPreview({
                   position={[spot.lat, spot.lng]}
                   icon={getRouteMarkerIcon(group.color, spot.isRouteStart)}
                 >
+                  <Tooltip direction="top" offset={[0, -28]} opacity={0.95}>
+                    {spot.name}
+                  </Tooltip>
                   <Popup>
-                    <strong>
-                      {formatPlanDay(spot.day, language)} {spot.isRouteStart ? '' : spot.time} {spot.name}
-                    </strong>
+                    <div className="map-spot-popup">
+                      <span>{formatPlanDay(spot.day, language)}{spot.isRouteStart ? '' : `・${spot.time}`}</span>
+                      <strong>{spot.name}</strong>
+                      {spot.address && <small>{spot.address}</small>}
+                    </div>
                   </Popup>
                 </Marker>
               )),

@@ -1,0 +1,5 @@
+Source deck: one-slide portrait research poster.
+Reusable pattern: retained title bar, five section headers, rounded section containers, and original gray/blue palette.
+Typography: existing Japanese sans-serif hierarchy retained for all inherited text. Added body text uses Yu Gothic for readability.
+Inherited placeholders: title is filled. No visible empty slide placeholders remain on the slide.
+Insertion contract: new text and screenshots are added only inside the originally empty content regions beneath the inherited section labels.

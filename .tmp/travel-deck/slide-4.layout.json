@@ -1,0 +1,612 @@
+{
+  "schema": "openai.presentation.layout/v4",
+  "unit": "px",
+  "slide": {
+    "aid": "sl/b7mi3f",
+    "id": "b7mi3f",
+    "slide": 4,
+    "layoutId": "5ff8b52c-4dc9-457e-843c-8d4b79684ba8",
+    "layoutName": "Title Slide",
+    "layoutType": "title",
+    "masterLayoutId": "0cec9b26-e3ce-470c-96a9-d9853c65606b",
+    "masterLayoutName": "Master",
+    "backgroundColor": "#FFFFFF",
+    "frame": {
+      "left": 0,
+      "top": 0,
+      "width": 1280,
+      "height": 720
+    }
+  },
+  "theme": {
+    "colorSchemeName": "ChatGPT",
+    "colors": {
+      "accent1": "#156082",
+      "accent2": "#E97132",
+      "accent3": "#196B24",
+      "accent4": "#0F9ED5",
+      "accent5": "#A02B93",
+      "accent6": "#4EA72E",
+      "bg1": "#FFFFFF",
+      "bg2": "#000000",
+      "tx1": "#1F1F1F",
+      "tx2": "#FFFFFF",
+      "dk1": "#000000",
+      "lt1": "#FFFFFF",
+      "dk2": "#0E2841",
+      "lt2": "#E8E8E8",
+      "hlink": "#467886",
+      "folHlink": "#96607D"
+    },
+    "typefaces": [
+      "Yu Gothic"
+    ]
+  },
+  "inheritedLayers": [
+    {
+      "scope": "layout",
+      "id": "5ff8b52c-4dc9-457e-843c-8d4b79684ba8",
+      "name": "Title Slide",
+      "type": "title",
+      "parentLayoutId": "0cec9b26-e3ce-470c-96a9-d9853c65606b",
+      "elements": []
+    },
+    {
+      "scope": "master",
+      "id": "0cec9b26-e3ce-470c-96a9-d9853c65606b",
+      "name": "Master",
+      "type": "master",
+      "elements": []
+    }
+  ],
+  "elements": [
+    {
+      "order": 1,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/ihsbils3",
+      "id": "1",
+      "name": "title",
+      "bbox": [
+        42,
+        36,
+        1196,
+        70
+      ],
+      "geometry": "rect",
+      "text": "朝7:30から、旅が“映画”のように進む",
+      "textPreview": "朝7:30から、旅が“映画”のように進む",
+      "resolvedFontSize": 39,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 39,
+        "typeface": "Yu Gothic",
+        "color": "#101820",
+        "bold": true,
+        "alignment": "left",
+        "verticalAlignment": "top",
+        "insets": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "朝7:30から、旅が“映画”のように進む"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "朝7:30から、旅が“映画”のように進む",
+          "resolvedTextStyle": {
+            "fontSize": 39,
+            "typeface": "Yu Gothic",
+            "color": "#101820",
+            "bold": true,
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "朝7:30から、旅が“映画”のように進む",
+              "fontSize": 39,
+              "typeface": "Yu Gothic",
+              "color": "#101820",
+              "bold": true,
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 2,
+      "kind": "image",
+      "scope": "slide",
+      "aid": "im/kjml4ru5",
+      "id": "2",
+      "bbox": [
+        42,
+        138,
+        780,
+        520
+      ],
+      "geometry": "roundRect",
+      "alt": "timeline-screen",
+      "contentType": "image/jpeg",
+      "imageFit": "cover",
+      "imageMask": {
+        "geometry": "roundRect",
+        "adjustmentList": [
+          {
+            "name": "adj",
+            "formula": "val 2308"
+          }
+        ]
+      },
+      "asset": {
+        "assetId": "a3ecdc08-eca1-431c-bb74-42388e3b9b3b",
+        "contentType": "image/jpeg",
+        "byteLength": 84724
+      }
+    },
+    {
+      "order": 3,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/4jatkva9",
+      "id": "3",
+      "name": "callout1",
+      "bbox": [
+        870,
+        155,
+        310,
+        95
+      ],
+      "geometry": "rect",
+      "text": "07:30\n東京駅を出発",
+      "textPreview": "07:30 | 東京駅を出発",
+      "resolvedFontSize": 30,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 30,
+        "typeface": "Yu Gothic",
+        "color": "#2F80ED",
+        "bold": true,
+        "alignment": "left",
+        "verticalAlignment": "top",
+        "insets": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      },
+      "textLayout": {
+        "lineCount": 2,
+        "lines": [
+          {
+            "index": 1,
+            "text": "07:30"
+          },
+          {
+            "index": 2,
+            "text": "東京駅を出発"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "07:30",
+          "resolvedTextStyle": {
+            "fontSize": 30,
+            "typeface": "Yu Gothic",
+            "color": "#2F80ED",
+            "bold": true,
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "07:30",
+              "fontSize": 30,
+              "typeface": "Yu Gothic",
+              "color": "#2F80ED",
+              "bold": true,
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        },
+        {
+          "index": 2,
+          "text": "東京駅を出発",
+          "resolvedTextStyle": {
+            "fontSize": 30,
+            "typeface": "Yu Gothic",
+            "color": "#2F80ED",
+            "bold": true,
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "東京駅を出発",
+              "fontSize": 30,
+              "typeface": "Yu Gothic",
+              "color": "#2F80ED",
+              "bold": true,
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 4,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/rmlsfa9k",
+      "id": "4",
+      "name": "callout2",
+      "bbox": [
+        870,
+        285,
+        310,
+        95
+      ],
+      "geometry": "rect",
+      "text": "10:30\n東寺の五重塔へ",
+      "textPreview": "10:30 | 東寺の五重塔へ",
+      "resolvedFontSize": 30,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 30,
+        "typeface": "Yu Gothic",
+        "color": "#101820",
+        "bold": true,
+        "alignment": "left",
+        "verticalAlignment": "top",
+        "insets": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      },
+      "textLayout": {
+        "lineCount": 2,
+        "lines": [
+          {
+            "index": 1,
+            "text": "10:30"
+          },
+          {
+            "index": 2,
+            "text": "東寺の五重塔へ"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "10:30",
+          "resolvedTextStyle": {
+            "fontSize": 30,
+            "typeface": "Yu Gothic",
+            "color": "#101820",
+            "bold": true,
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "10:30",
+              "fontSize": 30,
+              "typeface": "Yu Gothic",
+              "color": "#101820",
+              "bold": true,
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        },
+        {
+          "index": 2,
+          "text": "東寺の五重塔へ",
+          "resolvedTextStyle": {
+            "fontSize": 30,
+            "typeface": "Yu Gothic",
+            "color": "#101820",
+            "bold": true,
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "東寺の五重塔へ",
+              "fontSize": 30,
+              "typeface": "Yu Gothic",
+              "color": "#101820",
+              "bold": true,
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 5,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/qlcbm5sz",
+      "id": "5",
+      "name": "callout3",
+      "bbox": [
+        870,
+        415,
+        330,
+        95
+      ],
+      "geometry": "rect",
+      "text": "13:30\n清水寺から産寧坂へ",
+      "textPreview": "13:30 | 清水寺から産寧坂へ",
+      "resolvedFontSize": 30,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 30,
+        "typeface": "Yu Gothic",
+        "color": "#101820",
+        "bold": true,
+        "alignment": "left",
+        "verticalAlignment": "top",
+        "insets": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      },
+      "textLayout": {
+        "lineCount": 2,
+        "lines": [
+          {
+            "index": 1,
+            "text": "13:30"
+          },
+          {
+            "index": 2,
+            "text": "清水寺から産寧坂へ"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "13:30",
+          "resolvedTextStyle": {
+            "fontSize": 30,
+            "typeface": "Yu Gothic",
+            "color": "#101820",
+            "bold": true,
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "13:30",
+              "fontSize": 30,
+              "typeface": "Yu Gothic",
+              "color": "#101820",
+              "bold": true,
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        },
+        {
+          "index": 2,
+          "text": "清水寺から産寧坂へ",
+          "resolvedTextStyle": {
+            "fontSize": 30,
+            "typeface": "Yu Gothic",
+            "color": "#101820",
+            "bold": true,
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "清水寺から産寧坂へ",
+              "fontSize": 30,
+              "typeface": "Yu Gothic",
+              "color": "#101820",
+              "bold": true,
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 6,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/do3ah0rq",
+      "id": "6",
+      "name": "caption",
+      "bbox": [
+        870,
+        555,
+        340,
+        82
+      ],
+      "geometry": "rect",
+      "text": "時刻・所要時間・移動手段・住所・写真を、\n計画ではなく「体験の流れ」として見せる。",
+      "textPreview": "時刻・所要時間・移動手段・住所・写真を、 | 計画ではなく「体験の流れ」として見せる。",
+      "resolvedFontSize": 22,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 22,
+        "typeface": "Yu Gothic",
+        "color": "#66717D",
+        "alignment": "left",
+        "verticalAlignment": "top",
+        "insets": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      },
+      "textLayout": {
+        "lineCount": 4,
+        "lines": [
+          {
+            "index": 1,
+            "text": "時刻・所要時間・移動手段・住所"
+          },
+          {
+            "index": 2,
+            "text": "・写真を、"
+          },
+          {
+            "index": 3,
+            "text": "計画ではなく「体験の流れ」とし"
+          },
+          {
+            "index": 4,
+            "text": "て見せる。"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "時刻・所要時間・移動手段・住所・写真を、",
+          "resolvedTextStyle": {
+            "fontSize": 22,
+            "typeface": "Yu Gothic",
+            "color": "#66717D",
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "時刻・所要時間・移動手段・住所・写真を、",
+              "fontSize": 22,
+              "typeface": "Yu Gothic",
+              "color": "#66717D",
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        },
+        {
+          "index": 2,
+          "text": "計画ではなく「体験の流れ」として見せる。",
+          "resolvedTextStyle": {
+            "fontSize": 22,
+            "typeface": "Yu Gothic",
+            "color": "#66717D",
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "計画ではなく「体験の流れ」として見せる。",
+              "fontSize": 22,
+              "typeface": "Yu Gothic",
+              "color": "#66717D",
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 7,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/snutova5",
+      "id": "7",
+      "name": "footer",
+      "bbox": [
+        1180,
+        670,
+        60,
+        22
+      ],
+      "geometry": "rect",
+      "text": "04",
+      "textPreview": "04",
+      "resolvedFontSize": 14,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 14,
+        "typeface": "Yu Gothic",
+        "color": "#66717D",
+        "alignment": "right",
+        "verticalAlignment": "top",
+        "insets": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "04"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "04",
+          "resolvedTextStyle": {
+            "fontSize": 14,
+            "typeface": "Yu Gothic",
+            "color": "#66717D",
+            "alignment": "right"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "04",
+              "fontSize": 14,
+              "typeface": "Yu Gothic",
+              "color": "#66717D",
+              "alignment": "right"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    }
+  ],
+  "composeRuns": []
+}
